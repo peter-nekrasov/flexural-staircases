@@ -1,7 +1,7 @@
-zk = pi/3;
+zk = pi/2;
 d = 1;
 
-nnode = 400;
+nnode = 80;
 
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
@@ -14,6 +14,7 @@ plot(real(xi),imag(xi),'x-')
 
 src = []; src.r = [0.1;0.2];
 targ = []; targ.r = [0.4;0.9];
+% targ = []; targ.r = [0.4;1.2];
 
 kern1 = kernel('hq','s',zk,xi,d);
 val1 = (xip*kern1.eval(src,targ))*ws;
@@ -35,3 +36,33 @@ flex_kern = @(s,t) chnk.flex2d.kern(zk,s,t,'s');
 val2 = flex_kern(src,targ);
 
 abs(val1-val2)
+
+
+%%
+nplot = 80;
+xx = linspace(-pi/d,pi/d,nplot);
+[X,Y] = meshgrid(xx,xx);
+xi_grid = X(:) + 1i*Y(:);
+tic;
+kern = flex_kernel(zk,xi_grid,d);
+toc;
+
+uval = kern.eval(src,targ);
+
+figure(1);clf
+h = pcolor(X,Y, reshape(imag(uval),size(X))); h.EdgeColor = 'None';
+hold on, 
+plot(xi,'r-')
+hold off
+
+
+
+
+
+
+function fkern = flex_kernel(zk,xi,d)
+
+fkern = 1/(2*zk^2)*(kernel('hq','s',zk,xi,d) - ...
+    kernel('hq','s',1i*zk,xi,d));
+
+end
