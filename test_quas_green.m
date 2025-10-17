@@ -1,5 +1,5 @@
-zk = pi/2;
 d = 1;
+zk = 1.5;
 
 nnode = 80;
 
@@ -13,7 +13,7 @@ xip = 1 - 0.3i*d*cos(ts*d);
 plot(real(xi),imag(xi),'x-')
 
 src = []; src.r = [0.1;0.2];
-targ = []; targ.r = [0.4;0.9];
+targ = []; targ.r = [0.4;0.1];
 % targ = []; targ.r = [0.4;1.2];
 
 kern1 = kernel('hq','s',zk,xi,d);
@@ -39,7 +39,7 @@ abs(val1-val2)
 
 
 %%
-nplot = 80;
+nplot = 120;
 xx = linspace(-pi/d,pi/d,nplot);
 [X,Y] = meshgrid(xx,xx);
 xi_grid = X(:) + 1i*Y(:);
@@ -49,15 +49,15 @@ toc;
 
 uval = kern.eval(src,targ);
 
+%%
+
 figure(1);clf
-h = pcolor(X,Y, reshape(imag(uval),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape(angle(uval),size(X))); h.EdgeColor = 'None';
 hold on, 
 plot(xi,'r-')
 hold off
-
-
-
-
+colormap('hsv')
+colorbar
 
 
 function fkern = flex_kernel(zk,xi,d)
