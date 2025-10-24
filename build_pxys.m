@@ -1,4 +1,5 @@
 function [pxys, cs] = build_pxys(zk,kappas,d,ht,hb,skern,s2trkern,l,npxy)
+kappas = kappas(:).';
 
 n = 1000;
 thetas = 2*pi*(1:npxy)/npxy;

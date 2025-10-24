@@ -1,5 +1,7 @@
 function [val, grad, hess] = quasi_dual_sum(rx,ry,zk,kappa,d)
 
+kappa = kappa(:).';
+
 tol = 1e-11;
 Lbd = sqrt((log(tol))^2/real( min(abs(ry(:))))^2 + real(zk)^2);
 
@@ -12,8 +14,8 @@ M = ceil(Lbd*d/(2*pi));
 ms = reshape((-M:M),1,1,[]);
 xi_m = kappa(:) + 2*pi/d*ms;
 
-% beta = sqrt((xi_m.^2-zk^2));
 beta = sqrt(1i*(xi_m-zk)).*sqrt(-1i*(xi_m+zk));
+
 
 fhat = exp(-beta.*sqrt(ry.^2) + 1i*xi_m.*rx)./(2*beta);
 val = sum(fhat,3)/(d);
