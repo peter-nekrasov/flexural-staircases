@@ -147,7 +147,7 @@ if nargout == 1
         isub = (abs(nx(:)) > max(ls)) | ifar;
 
         if any(isub)
-        vali = sgreen(zk,[0;0],[rx(isub).'+ nx(isub).'*d;ry(isub).']);
+        vali = sgreen([0;0],[rx(isub).'+ nx(isub).'*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         val(:,isub,:) = val(:,isub,:) - vali;
         end
