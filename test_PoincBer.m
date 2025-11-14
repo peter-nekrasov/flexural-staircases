@@ -1,6 +1,6 @@
 d = 1;
 
-kappa = 0.001;
+kappa = 0.1;
 
 ht = 1.02*d; hb = -1.02*d;
 l = 2;
@@ -15,7 +15,7 @@ tic;
 toc;
 
 
-src = []; src.r = [0;3]; src.n = [1;0];
+src = []; src.r = [0;1]; src.n = [1;0];
 
 nplot = 100;
 XX = linspace(-3*d/2,3*d/2,nplot);
@@ -29,10 +29,44 @@ targ.n = [1;1]/sqrt(2) + 0*targ.r;
 u = quasi_lap_kern(src,targ,'d',kappa,d,pxys,cs,l,1);
 
 
- figure(1);clf
-h = pcolor(X,Y,reshape(real(u),size(X))); h.EdgeColor = 'None';
+figure(1);clf
+h = pcolor(X,Y,reshape(imag(u),size(X))); h.EdgeColor = 'None';
 colorbar
+% 
+% h = pcolor(X,Y,reshape(abs(u-u2),size(X))); h.EdgeColor = 'None';
+% colorbar
+% 
+% figure(1);clf
+% subplot(1,3,1)
+% h = pcolor(X,Y,reshape(real(u),size(X))); h.EdgeColor = 'None';
+% colorbar
+% subplot(1,3,2)
+% h = pcolor(X,Y,reshape(real(u2),size(X))); h.EdgeColor = 'None';
+% colorbar
+% subplot(1,3,3)
+% h = pcolor(X,Y,reshape(abs(u-conj(u2)),size(X))); h.EdgeColor = 'None';
+% colorbar
 
+
+
+%%
+
+thetas = linspace(0,2*pi,200);
+kappas = 1e-3 * exp(1i*thetas);
+[pxys, cs] = build_pxys(0,kappas,d,ht,hb,skern,s2trkern,l,npxy);
+src = []; src.r = [0;0];src.n = [1;0];
+targ = []; targ.r = [0.2;.2];
+
+u = quasi_lap_kern(src,targ,'hilb',kappas,d,pxys,cs,l,1);
+
+figure(4);clf
+plot(thetas, imag(u),'.')
+%%
+
+kappa = 0.1;
+[pxys, cs] = build_pxys(0,kappa,d,ht,hb,skern,s2trkern,l,npxy);
+
+% return
 
 chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
 chnkrs = [];
@@ -63,25 +97,6 @@ b = -0.25*rhs + dmat * (dmat * rhs);
 
 norm(a-b) / norm(a)
 
-
-
-dkern = kernel(@(s,t) chnk.lap2d.kern(s,t,'d'));
-dkern.sing = 'smooth';
-hkern = kernel(@(s,t) chnk.lap2d.kern(s,t,'hilb'));
-hkern.sing = 'pv';
-
-dmat_0 = chunkermat(chnkr,dkern);
-hmat_0 = chunkermat(chnkr,hkern);
-
-
-% norm(0.25 * hmat_0*hmat_0 - (-0.25*eye(size(hmat_0)) + dmat_0*dmat_0))
-
-rhs = skern.eval(src,chnkr);
-
-a = 0.25*hmat_0 * (hmat_0 * rhs);
-b = -0.25*rhs + dmat_0 * (dmat_0 * rhs);
-
-norm(a-b) / norm(a)
 %%
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
@@ -95,6 +110,8 @@ for i = -5:5
 end
 chnkrs = merge(chnkrs);
 
+
+src.r = [0;2];
 figure(2);clf
 plot(chnkr,'.')
 hold on
@@ -122,22 +139,44 @@ norm(a-b) / norm(a)
 
 
 %%
-hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
-hpkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilbprime',kappa,d,pxys,cs,l,1));
+chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
 
-src = []; src.r = [0;0]; src.n = [1;0];
+src.r = [0;0];
+dkern = kernel(@(s,t) chnk.lap2d.kern(s,t,'d'));
+dkern.sing = 'smooth';
+hkern = kernel(@(s,t) chnk.lap2d.kern(s,t,'hilb'));
+hkern.sing = 'pv';
 
-targ = []; targ.r = [1;1]; targ.n = [0.2;1]; targ.n = targ.n/vecnorm(targ.n);
+dmat_0 = chunkermat(chnkr,dkern);
+hmat_0 = chunkermat(chnkr,hkern);
 
-up = hpkern.eval(src,targ);
 
-h = 1e-3;
-targh = []; targh.r = [1;1] + [-h,h] .* [-targ.n(2);targ.n(1)]; 
-u = hkern.eval(src,targh);
+% norm(0.25 * hmat_0*hmat_0 - (-0.25*eye(size(hmat_0)) + dmat_0*dmat_0))
 
-up2 = (u(2)-u(1))/2/h
+rhs = skern.eval(src,chnkr);
 
-up - up2
+a = 0.25*hmat_0 * (hmat_0 * rhs);
+b = -0.25*rhs + dmat_0 * (dmat_0 * rhs);
+
+norm(a-b) / norm(a)
+
+% %%
+% hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
+% hpkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilbprime',kappa,d,pxys,cs,l,1));
+% 
+% src = []; src.r = [0;0]; src.n = [1;0];
+% 
+% targ = []; targ.r = [1;1]; targ.n = [0.2;1]; targ.n = targ.n/vecnorm(targ.n);
+% 
+% up = hpkern.eval(src,targ);
+% 
+% h = 1e-3;
+% targh = []; targh.r = [1;1] + [-h,h] .* [-targ.n(2);targ.n(1)]; 
+% u = hkern.eval(src,targh);
+% 
+% up2 = (u(2)-u(1))/2/h
+% 
+% up - up2
 
 
 

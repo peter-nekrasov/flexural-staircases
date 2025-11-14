@@ -15,7 +15,6 @@ yt = repmat(targ(2,:).',1,nsrc);
 rx = xt-xs;
 ry = yt-ys;
 
-
 rx = rx(:);
 ry = ry(:);
 
