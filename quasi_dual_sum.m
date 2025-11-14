@@ -14,8 +14,13 @@ M = ceil(Lbd*d/(2*pi));
 ms = reshape((-M:M),1,1,[]);
 xi_m = kappa(:) + 2*pi/d*ms;
 
+% if abs(zk) > 1e-10
+% beta = sqrt(1i*(xi_m-zk)).*sqrt(-1i*(xi_m+zk));
+% else
+% beta = sqrt(xi_m.^2);
+% % beta = xi_m;
+% end
 beta = sqrt(1i*(xi_m-zk)).*sqrt(-1i*(xi_m+zk));
-
 
 fhat = exp(-beta.*sqrt(ry.^2) + 1i*xi_m.*rx)./(2*beta);
 val = sum(fhat,3)/(d);
