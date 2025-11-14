@@ -6,7 +6,7 @@ thetas = 2*pi*(1:npxy)/npxy;
 pxy0 = [cos(thetas);sin(thetas)];
 % pxy = 5*d/2 * ;
 
-pxy = [3/2 * pxy0, 2*pxy0, 3*pxy0]*d;
+pxy = [3/2 * pxy0, 2*pxy0]*d;
 npxy = size(pxy,2);
 pxys = []; pxys.r = pxy; pxys.n = [cos(thetas);sin(thetas)];
 

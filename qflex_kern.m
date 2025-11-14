@@ -1,4 +1,4 @@
-function submat= qflex_kern(zk,srcinfo,targinfo,type,kappa,d,pxys,cs_f,cs_l,l,varargin)
+function submat= qflex_kern(zk,srcinfo,targinfo,type,kappa,d,pxys_f,cs_f,pxys_l,cs_l,l,varargin)
 
 % 
 % see also CHNK.FLEX2D.KERN
@@ -14,7 +14,7 @@ targ = targinfo.r;
 switch lower(type)
 case {'s', 'single'} % flexural wave single layer
 
-   val = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+   val = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
    submat = 1/(2*zk^2).*val;
 
 case {'sp', 'sprime'} % normal derivative of flexural wave single layer
@@ -23,7 +23,7 @@ case {'sp', 'sprime'} % normal derivative of flexural wave single layer
    nxtarg = repmat((targnorm(1,:)).',1,ns);
    nytarg = repmat((targnorm(2,:)).',1,ns);
 
-   [~,grad] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l);  
+   [~,grad] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l);  
    submat = 1/(2*zk^2).*(grad(:,:,1).*nxtarg + grad(:,:,2).*nytarg);
 
 %%% CLAMPED PLATE KERNELS
@@ -34,7 +34,7 @@ case {'clamped_plate_bcs'}
     nytarg = targinfo.n(2,:).';  
     submat = zeros(2*nt,ns);
     
-    [val, grad] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+    [val, grad] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
     
     firstbc = 1/(2*zk^2).*val ;
     secondbc = 1/(2*zk^2).*(grad(:, :, 1).*nxtarg + grad(:, :, 2).*nytarg);
@@ -54,7 +54,7 @@ case {'clamped_plate'}
    nxtarg = repmat((targnorm(1,:)).',1,ns);
    nytarg = repmat((targnorm(2,:)).',1,ns);
    
-   [~, ~, hess, third, fourth] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+   [~, ~, hess, third, fourth] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
    
    dx = repmat(srctang(1,:),nt,1);
    dy = repmat(srctang(2,:),nt,1);
@@ -119,7 +119,7 @@ case {'clamped_plate_eval'}
     taux = dx./ds;
     tauy = dy./ds;
 
-    [~, ~, hess, third] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+    [~, ~, hess, third] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
 
     K1 = -(1/(2*zk^2).*(third(:, :, 1).*(nx.*nx.*nx) + third(:, :, 2).*(3*nx.*nx.*ny) +...
        third(:, :, 3).*(3*nx.*ny.*ny) + third(:, :, 4).*(ny.*ny.*ny)) ) - ...
@@ -148,7 +148,7 @@ case {'clamped_plate_eval_ff'}
     taux = dx./ds;
     tauy = dy./ds;
 
-    [~, ~, hess, third] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+    [~, ~, hess, third] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
 
     K1 = -(1/(2*zk^2).*(third(:, :, 1).*(nx.*nx.*nx) + third(:, :, 2).*(3*nx.*nx.*ny) +...
        third(:, :, 3).*(3*nx.*ny.*ny) + third(:, :, 4).*(ny.*ny.*ny)) ) - ...
@@ -170,7 +170,7 @@ case {'free_plate_bcs'}
     targd2 = targinfo.d2;
     nu = varargin{1};
     
-    [~, ~, hess, third] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+    [~, ~, hess, third] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
 
     nxtarg = repmat((targnorm(1,:)).',1,ns);
     nytarg = repmat((targnorm(2,:)).',1,ns);
@@ -215,7 +215,7 @@ case {'free_plate'}
    targd2 = targinfo.d2;
    nu = varargin{1};
 
-   [~, ~, hess, third, fourth] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+   [~, ~, hess, third, fourth] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
 
    nx = repmat(srcnorm(1,:),nt,1);
    ny = repmat(srcnorm(2,:),nt,1);
@@ -248,8 +248,8 @@ case {'free_plate'}
 
    kappatarg = numer ./ denom; % target curvature
 
-   hilb = quasi_lap_kern(srcinfo,targinfo,'hilb',kappa,d,pxys,cs_l,l,0);
-   hilbp = quasi_lap_kern(srcinfo,targinfo,'hilbprime',kappa,d,pxys,cs_l,l,0);
+   hilb = quasi_lap_kern(srcinfo,targinfo,'hilb',kappa,d,pxys_l,cs_l,l,0);
+   hilbp = quasi_lap_kern(srcinfo,targinfo,'hilbprime',kappa,d,pxys_l,cs_l,l,0);
    hilb = (1+nu) * hilb / 2;
    hilbp = (1+nu) * hilbp / 2;
    
@@ -328,7 +328,7 @@ case {'free_plate_eval'}
    srctang = srcinfo.d;
    nu = varargin{1};
 
-   [val,grad] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+   [val,grad] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
    nx = repmat(srcnorm(1,:),nt,1);
    ny = repmat(srcnorm(2,:),nt,1);
 
@@ -355,7 +355,7 @@ case {'free_plate_eval_ff'}
    srctang = srcinfo.d;
    nu = varargin{1};
 
-   [val,grad] = qflex_green(zk,src,targ,kappa,d,pxys,cs_f,l,0);  
+   [val,grad] = qflex_green(src,targ,zk,kappa,d,pxys_f,cs_f,l,0);  
    nx = repmat(srcnorm(1,:),nt,1);
    ny = repmat(srcnorm(2,:),nt,1);
 
