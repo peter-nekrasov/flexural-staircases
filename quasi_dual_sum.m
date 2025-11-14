@@ -1,4 +1,4 @@
-function [val, grad, hess] = quasi_dual_sum(rx,ry,zk,kappa,d)
+function [val, grad, hess, third, fourth] = quasi_dual_sum(rx,ry,zk,kappa,d)
 
 kappa = kappa(:).';
 
@@ -36,6 +36,27 @@ if nargout >2
     hess(:,:,1) = sum(-xi_m.^2.*fhat,3)/d;
     hess(:,:,2) = sum(-1i*xi_m.*beta.*(sqrt(ry.^2)./ry).*fhat,3)/d;
     hess(:,:,3) = sum((beta.*(sqrt(ry.^2)./ry)).^2.*fhat,3)/d;
+end
+
+if nargout > 3
+    fac1 = (1i*xi_m);
+    fac2 = -beta.*(sqrt(ry.^2)./ry);
+    third = zeros(length(kappa),npt,4);
+    third(:,:,1) = sum(fac1.^3.*fhat,3)/d;
+    third(:,:,2) = sum(fac1.^2.*fac2.*fhat,3)/d;
+    third(:,:,3) = sum(fac1.*fac2.^2.*fhat,3)/d;
+    third(:,:,4) = sum(fac2.^3.*fhat,3)/d;
+end
+
+if nargout > 4
+    fac1 = (1i*xi_m);
+    fac2 = -beta.*(sqrt(ry.^2)./ry);
+    fourth = zeros(length(kappa),npt,5);
+    fourth(:,:,1) = sum(fac1.^4.*fhat,3)/d;
+    fourth(:,:,2) = sum(fac1.^3.*fac2.*fhat,3)/d;
+    fourth(:,:,3) = sum(fac1.^2.*fac2.^2.*fhat,3)/d;
+    fourth(:,:,4) = sum(fac1.^1.*fac2.^3.*fhat,3)/d;
+    fourth(:,:,5) = sum(fac2.^4.*fhat,3)/d;
 end
 
 end
