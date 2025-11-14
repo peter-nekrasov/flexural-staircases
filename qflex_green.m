@@ -102,7 +102,8 @@ if ~isempty(rxclose)
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
-        thirdi = reshape(thirdi,1,[],5);
+        thirdi = reshape(thirdi,1,[],4);
+        fourthi = reshape(fourthi,1,[],5);
         val_near(:,iuse) = val_near(:,iuse) + vali(:,iuse).*alpha.^i;
         grad_near(:,iuse,:) = grad_near(:,iuse,:) + gradi(:,iuse,:).*alpha.^i;
         hess_near(:,iuse,:) = hess_near(:,iuse,:) + hessi(:,iuse,:).*alpha.^i;

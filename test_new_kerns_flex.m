@@ -8,19 +8,19 @@ kappa = kappa - 0.3*1i*sin(kappa*d);
 
 ht = 1.02*d; hb = -1.02*d;
 l = 2;
-npxy = 40;
+npxy = 100;
 
-if abs(zk) > 1e-10
-    skern = kernel('h','s',zk);
-    s2trkern = kernel([kernel('h','s',zk);kernel('h','sp',zk)]);
-else
-    skern = kernel('l','s');
-    s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
-end
+% if abs(zk) > 1e-10
+%     skern = kernel('h','s',zk);
+%     s2trkern = kernel([kernel('h','s',zk);kernel('h','sp',zk)]);
+% else
+%     skern = kernel('l','s');
+%     s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+% end
 
 
 tic;
-[pxys, cs] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,npxy);
+[pxys, cs] = build_flex_pxys(zk,kappa,d,ht,hb,l,npxy);
 toc;
 
 
@@ -35,19 +35,19 @@ XX = linspace(-3*d/2,3*d/2,nplot);
 targ = [X(:).';Y(:).'];
 
 tic;
-[val, grad, hess] = new_green(src,targ,zk,kappa,d,pxys,cs,l,1);
+[val, grad, hess,third,fourth] = qflex_green(src,targ,zk,kappa,d,pxys,cs,l,1);
 toc;
 val = reshape(val, length(kappa), []);
 grad = reshape(grad, length(kappa), [],2);
 hess = reshape(hess, length(kappa), [],3);
+third = reshape(third, length(kappa), [],4);
+fourth = reshape(fourth, length(kappa), [],5);
 
 
 figure(1);clf
 % h = pcolor(X,Y,reshape(real(val(10,:)),size(X))); h.EdgeColor = 'None';
 h = pcolor(X,Y,reshape(real(grad(1,:,1)),size(X))); h.EdgeColor = 'None';
 colorbar
-
-
 
 %%
 src = [0;0];
@@ -59,12 +59,16 @@ XX2 = linspace(0.05,3*d/2,nplot);
 
 targ = [X(:).';Y(:).'];
 tic;
-[val_true, grad_true, hess_true] =  quasi_dual_sum(X(:).',Y(:).',zk,kappa,d);
-[val, grad, hess] = new_green([0;0],targ,zk,kappa,d,pxys,cs,l,1);
+[val_true, grad_true, hess_true, third_true, fourth_true] =  quasi_flex_dual_sum(X(:).',Y(:).',zk,kappa,d);
+[val, grad, hess,third,fourth] = qflex_green([0;0],targ,zk,kappa,d,pxys,cs,l,1);
+% [val, grad, hess] = new_green([0;0],targ,zk,kappa,d,pxys,cs,l,1);
 toc;
 val = reshape(val, length(kappa), []);
 grad = reshape(grad, length(kappa), [],2);
 hess = reshape(hess, length(kappa), [],3);
+third = reshape(third, length(kappa), [],4);
+fourth = reshape(fourth, length(kappa), [],5);
+
 
 norm(val - val_true,'fro')/norm(val_true,'fro')
 norm(grad - grad_true,'fro')/norm(grad_true,'fro')
