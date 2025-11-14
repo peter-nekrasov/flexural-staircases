@@ -26,7 +26,7 @@ targ.r = [X(:).';Y(:).'];
 targ.n = [1;1]/sqrt(2) + 0*targ.r;
 
 
-u = quasi_lap_kern(src,targ,'d',kappa,d,pxys,cs,l);
+u = quasi_lap_kern(src,targ,'d',kappa,d,pxys,cs,l,1);
 
 
  figure(1);clf
@@ -49,9 +49,9 @@ hold off
 axis equal
 
 
-dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l));
+dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l,1));
 dkern.sing = 'smooth';
-hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l));
+hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
 hkern.sing = 'pv';
 
 dmat = chunkermat(chnkr,dkern);
@@ -104,9 +104,9 @@ hold off
 axis equal
 
 
-dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l));
+dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l,1));
 dkern.sing = 'smooth';
-hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l));
+hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
 hkern.sing = 'pv';
 
 dmat = chunkermat(chnkr,dkern);
@@ -118,6 +118,30 @@ a = 0.25*hmat * (hmat * rhs);
 b = -0.25*rhs + dmat * (dmat * rhs);
 
 norm(a-b) / norm(a)
+
+
+
+%%
+hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
+hpkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilbprime',kappa,d,pxys,cs,l,1));
+
+src = []; src.r = [0;0]; src.n = [1;0];
+
+targ = []; targ.r = [1;1]; targ.n = [0.2;1]; targ.n = targ.n/vecnorm(targ.n);
+
+up = hpkern.eval(src,targ);
+
+h = 1e-3;
+targh = []; targh.r = [1;1] + [-h,h] .* [-targ.n(2);targ.n(1)]; 
+u = hkern.eval(src,targh);
+
+up2 = (u(2)-u(1))/2/h
+
+up - up2
+
+
+
+
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
