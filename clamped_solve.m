@@ -22,7 +22,7 @@ if false
     iout = targ.r(2,:) > wtarg(2,:);
 else
     chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
-    targmod = []; targmod.r = [targ.r(1,:), targ.r(2,:)];
+    targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
     iout = ~chunkerinterior(chnkr,targmod);
 end
 

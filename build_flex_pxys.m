@@ -3,7 +3,11 @@ kappas = kappas(:).';
 
 n = 1000;
 thetas = 2*pi*(1:npxy)/npxy;
-pxy = 5*d/2 * [cos(thetas);sin(thetas)];
+pxy0 = [cos(thetas);sin(thetas)];
+% pxy = 5*d/2 * ;
+
+pxy = [3/2 * pxy0, 2*pxy0, 3*pxy0]*d;
+npxy = size(pxy,2);
 pxys = []; pxys.r = pxy; pxys.n = [cos(thetas);sin(thetas)];
 
 xs = linspace(-d/2,d/2,n);
@@ -15,7 +19,7 @@ rdw = [xs(:).'; 0*xs(:).' + hb];
 
 rwall = [];
 rwall.r = [[0*ys(:).' - d/2; ys(:).'],[0*ys(:).' + d/2; ys(:).']];
-rwall.n = [1;0] + 0*rwall.r;
+% rwall.n = [1;0] + 0*rwall.r;
 
 [pxy2u, pxy2u_grad, pxy2u_hess, pxy2u_third] = chnk.flex2d.hkdiffgreen(zk,pxys.r,rup);
 dnpxy2u = pxy2u_grad(:,:,end);
@@ -106,6 +110,34 @@ for i = 1:length(kappas)
         -dnsrc2wall(id_r,i) + exp(1i*kappas(i)*d).*dnsrc2wall(id_l,i);
         -dn2src2wall(id_r,i) + exp(1i*kappas(i)*d).*dn2src2wall(id_l,i);
         -dn3src2wall(id_r,i) + exp(1i*kappas(i)*d).*dn3src2wall(id_l,i)];
+
+    % A  = [pxy2u;dnpxy2u;dn2pxy2u;dn3pxy2u; ... 
+    %     pxy2d;dnpxy2d;dn2pxy2d;dn3pxy2d];
+    % 
+    % r = [Gu(i,:).' - src2u(:,i); 
+    %     dnGu(i,:).' - dnsrc2u(:,i); 
+    %     dn2Gu(i,:).' - dn2src2u(:,i); 
+    %     dn3Gu(i,:).' - dn3src2u(:,i);
+    %     Gd(i,:).' - src2d(:,i); 
+    %     dnGd(i,:).' - dnsrc2d(:,i); 
+    %     dn2Gd(i,:).' - dn2src2d(:,i); 
+    %     dn3Gd(i,:).' - dn3src2d(:,i)];
+
+    % A  = [pxy2u;dnpxy2u; ... 
+    %     pxy2d;dnpxy2d; ...
+    %     pxy2wall(id_r,:) - exp(1i*kappas(i)*d).*pxy2wall(id_l,:);
+    %     dnpxy2wall(id_r,:) - exp(1i*kappas(i)*d).*dnpxy2wall(id_l,:);
+    %     dn2pxy2wall(id_r,:) - exp(1i*kappas(i)*d).*dn2pxy2wall(id_l,:);
+    %     dn3pxy2wall(id_r,:) - exp(1i*kappas(i)*d).*dn3pxy2wall(id_l,:)];
+    % 
+    % r = [Gu(i,:).' - src2u(:,i); 
+    %     dnGu(i,:).' - dnsrc2u(:,i); 
+    %     Gd(i,:).' - src2d(:,i); 
+    %     dnGd(i,:).' - dnsrc2d(:,i); 
+    %     -src2wall(id_r,i) + exp(1i*kappas(i)*d).*src2wall(id_l,i);
+    %     -dnsrc2wall(id_r,i) + exp(1i*kappas(i)*d).*dnsrc2wall(id_l,i);
+    %     -dn2src2wall(id_r,i) + exp(1i*kappas(i)*d).*dn2src2wall(id_l,i);
+    %     -dn3src2wall(id_r,i) + exp(1i*kappas(i)*d).*dn3src2wall(id_l,i)];
     cs(:,i) = A\r;
 end
 pxys = pxys.r;

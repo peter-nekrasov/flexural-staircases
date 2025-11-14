@@ -1,13 +1,17 @@
 zk = 1;
+zk = 0.3;
+
 d = 1;
 
-kappa = linspace(-pi/d,pi/d,30);
+kappa = linspace(-pi/d,pi/d,10);
 kappa = kappa - 0.3*1i*sin(kappa*d);
 % kappa = kappa(10);
-% kappa =0;
+kappa =0*kappa;
+kappa = 0;
 
 ht = 1.02*d; hb = -1.02*d;
 l = 2;
+l = 1;
 npxy = 100;
 
 % if abs(zk) > 1e-10
@@ -73,6 +77,11 @@ fourth = reshape(fourth, length(kappa), [],5);
 norm(val - val_true,'fro')/norm(val_true,'fro')
 norm(grad - grad_true,'fro')/norm(grad_true,'fro')
 norm(hess - hess_true,'fro')/norm(hess_true,'fro')
+norm(third - third_true,'fro')/norm(third_true,'fro')
+norm(fourth - fourth_true,'fro')/norm(fourth_true,'fro')
+
+
+
 
 % %%
 figure(2);clf
@@ -90,18 +99,50 @@ h = pcolor(X,Y,reshape(abs(grad(i,:,2)-grad_true(i,:,2)),size(X))); h.EdgeColor 
 colorbar
 
 %%
+figure(5);clf
+i = 1;
+subplot(1,3,1)
+h = pcolor(X,Y,reshape(real(fourth(i,:,2)),size(X))); h.EdgeColor = 'None';
+colorbar
 
-tic;
-[pxys, cs] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,npxy);
-toc;
-tic;
-val = new_green([0;0],targ,zk,kappa,d,pxys,cs,l,1);
-toc;
+subplot(1,3,2)
+h = pcolor(X,Y,reshape(real(fourth_true(i,:,2)),size(X))); h.EdgeColor = 'None';
+colorbar
 
-tic;
-skern_hq = kernel('hq','s',zk,kappa,d);
-toc;
-tic;
-val_old = skern_hq.eval(struct('r',src),struct('r',targ));
-toc;
+subplot(1,3,3)
+h = pcolor(X,Y,reshape(log10(abs(fourth(i,:,2)-fourth_true(i,:,2))),size(X))); h.EdgeColor = 'None';
+colorbar
 
+
+
+figure(3);clf
+i = 1;
+subplot(1,3,1)
+h = pcolor(X,Y,reshape(real(val(i,:)),size(X))); h.EdgeColor = 'None';
+colorbar
+
+subplot(1,3,2)
+h = pcolor(X,Y,reshape(real(val_true(i,:)),size(X))); h.EdgeColor = 'None';
+colorbar
+
+subplot(1,3,3)
+h = pcolor(X,Y,reshape(abs(val(i,:)-val_true(i,:)),size(X))); h.EdgeColor = 'None';
+colorbar
+
+
+%%
+
+% tic;
+% [pxys, cs] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,npxy);
+% toc;
+% tic;
+% val = new_green([0;0],targ,zk,kappa,d,pxys,cs,l,1);
+% toc;
+% 
+% tic;
+% skern_hq = kernel('hq','s',zk,kappa,d);
+% toc;
+% tic;
+% val_old = skern_hq.eval(struct('r',src),struct('r',targ));
+% toc;
+% 
