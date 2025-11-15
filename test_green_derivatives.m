@@ -71,6 +71,14 @@ targ2 = [X(:).';Y(:).'];
 [val2,grad2,hess2,third2,fourth2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
 % [val2,grad2,hess2] = chnk.helm2dquas.green(src2,targ2,zk,xi,d,sn(:,:,1),l,ising);
 
+
+[val_true, grad_true, hess_true, third_true, fourth_true] =  quasi_flex_dual_sum(X(:).',Y(:).',zk,xi,d);
+
+
+
+
+norm(val2(:) -val_true(:))
+
 figure(1);clf
 h = pcolor(X,Y,reshape(real(val2(:,:,1)),size(X))); h.EdgeColor = 'None';
 

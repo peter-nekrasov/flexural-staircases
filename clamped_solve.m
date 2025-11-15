@@ -37,14 +37,17 @@ targout = []; targout.r = targ.r(:,iout);
 skern = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
+l=2; N = 40; a = 15; M = 1e4;
+ns = (0:N).';
+sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
+sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
+sn = cat(3,sn1,sn2);
 ht = 1.02*d; hb = -1.02*d;
-l = 2;
-
-[pxys_f, cs_f] = build_flex_pxys(zk,kappa,d,ht,hb,l,100);
 [pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
 
 %%
-fkern =  @(s,t) qflex_kern(zk, s, t, 'clamped_plate',kappa,d,pxys_f,cs_f,pxys_l,cs_l,l);
+ising = 1;
+fkern =  @(s,t) qflex_kern(zk, s, t, 'clamped_plate',kappa,d,sn,pxys_l,cs_l,l,ising);
 
 curv = signed_curvature(chnkr);
 curv = curv(:);
@@ -59,15 +62,15 @@ sys(2:2:end,1:2:end) = sys(2:2:end,1:2:end) + curv.*eye(chnkr.npt);
 toc(start)
 %%
 
-skern =  @(s,t) qflex_kern(zk, s, t, 's',kappa,d,pxys_f,cs_f,pxys_l,cs_l,l);
-bskern =  @(s,t) qflex_kern(zk, s, t, 'clamped_plate_bcs',kappa,d,pxys_f,cs_f,pxys_l,cs_l,l);
+skern =  @(s,t) qflex_kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,ising);
+bskern =  @(s,t) qflex_kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,ising);
 
 rhs = -bskern(src,chnkr);
 
 % Solving linear system
 sol = sys\rhs;
 
-ikern = @(s,t) qflex_kern(zk, s, t, 'clamped_plate_eval',kappa,d,pxys_f,cs_f,pxys_l,cs_l,l);
+ikern = @(s,t) qflex_kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,pxys_l,cs_l,l,ising);
 
 opts = []; opts.forcesmooth = true;
 start1 = tic;

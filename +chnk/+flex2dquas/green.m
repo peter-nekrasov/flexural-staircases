@@ -530,7 +530,7 @@ elseif nargout == 5
         isub = (abs(nx(:)) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi,thirdi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi,thirdi,fourthi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
