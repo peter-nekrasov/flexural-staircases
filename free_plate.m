@@ -1,7 +1,8 @@
 zk = 1.2;
 d = 1.2;
+nu = 0.3;
 
-kappa = 0.3+0.3*1i;
+kappa = pi/d;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);
@@ -43,24 +44,44 @@ ht = 1.02*d; hb = -1.02*d;
 [pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
 
 %%
-ising = 1;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,pxys_l,cs_l,l,ising);
 
-curv = signed_curvature(chnkr);
-curv = curv(:);
+
+ising = 1;
+fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,pxys_l,cs_l,l,ising,nu);
+double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,pxys_l,cs_l,l,ising);
+hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys_l,cs_l,l,ising);
 
 opts = [];
 opts.sing = 'log';
 
+opts2 = [];
+opts2.sing = 'pv';
+
+% building system matrix
+
 start = tic;
-sys = chunkermat(chnkr,fkern, opts);
-sys = sys - 0.5*eye(2*chnkr.npt);
-sys(2:2:end,1:2:end) = sys(2:2:end,1:2:end) + curv.*eye(chnkr.npt);
-toc(start)
+sysmat1 = chunkermat(chnkr,fkern1, opts);
+D = chunkermat(chnkr, double, opts);
+H = chunkermat(chnkr, hilbert, opts2);     
+
+sysmat = zeros(2*chnkr.npt);
+sysmat(1:2:end,1:2:end) = sysmat1(1:4:end,1:2:end) + sysmat1(3:4:end,1:2:end)*H  - 2*((1+nu)/2)^2*D*D;
+sysmat(2:2:end,1:2:end) = sysmat1(2:4:end,1:2:end) + sysmat1(4:4:end,1:2:end)*H;
+sysmat(1:2:end,2:2:end) = sysmat1(1:4:end,2:2:end) + sysmat1(3:4:end,2:2:end);
+sysmat(2:2:end,2:2:end) = sysmat1(2:4:end,2:2:end) + sysmat1(4:4:end,2:2:end);
+
+D = [-1/2 + (1/8)*(1+nu).^2, 0; 0, 1/2];  % jump matrix 
+D = kron(eye(chnkr.npt), D);
+
+sys =  D + sysmat;
+t1 = toc(start);
+fprintf('%5.2e s : time to assemble matrix\n',t1)
+
+
 %%
 
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,ising);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,ising);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,ising,nu);
 
 rhs = -bskern(src,chnkr);
 
@@ -68,20 +89,25 @@ rhs = -bskern(src,chnkr);
 sol = sys\rhs;
 
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,pxys_l,cs_l,l,0);
-ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate_eval');
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,pxys_l,cs_l,l,0,nu);
+ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate_eval',nu);
+
+
+dens_comb = zeros(3*chnkr.npt,1);
+dens_comb(1:3:end) = sol(1:2:end);
+dens_comb(2:3:end) = H*sol(1:2:end);
+dens_comb(3:3:end) = sol(2:2:end);
+
+wts = repmat(chnkr.wts(:).',3,1);
 
 start1 = tic;
-uscat = chunkerkerneval(chnkr, ikern_0,sol, targout);
-toc(start1)
-wts = repmat(chnkr.wts(:).',2,1);
-uscat = uscat + ikern(chnkr,targout) * (sol .* wts(:));
+uscat = chunkerkerneval(chnkr, ikern_0,dens_comb,targout);
+uscat = uscat + ikern(chnkr,targout) * (dens_comb .* wts(:));
 t2 = toc(start1);
 fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
 
 uin = skern(src,targout);
 utot = uscat(:)+uin(:);
-
 
 
 %%
@@ -103,8 +129,6 @@ h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
 colorbar
 hold off
 axis equal
-
-
 
 
 
