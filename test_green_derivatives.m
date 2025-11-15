@@ -10,6 +10,7 @@ ws = 1/(nnode-1);
 xi = ts - 0.3i*sin(ts*d);
 xi = xi(57);
 
+
 h = 0.00001;
 
 l=2; N = 40; a = 15; M = 1e4;
@@ -45,3 +46,23 @@ err11 = abs(d1*third(:,:,1) - fourth(2,1,2))  / abs(fourth(2,1,2)) % G_{xxxy}
 err12 = abs(d1*third(:,:,2) - fourth(2,1,3))  / abs(fourth(2,1,3)) % G_{xxyy}
 err13 = abs(d1*third(:,:,3) - fourth(2,1,4))  / abs(fourth(2,1,4)) % G_{xyyy}
 err14 = abs(d1*third(:,:,4) - fourth(2,1,5))  / abs(fourth(2,1,5)) % G_{yyyy}
+
+
+
+
+%%
+src2 = [0;0];
+
+nplot = 100;
+XX = linspace(-3*d/2,3*d/2,nplot);
+% YY = linspace(-1.3*3*d/2,1.3*3*d/2,nplot);
+[X,Y] = meshgrid(XX,XX);
+
+targ2 = [X(:).';Y(:).'];
+% [val2,grad2,hess2,third2,fourth2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
+[val2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
+
+figure(1);clf
+h = pcolor(X,Y,reshape(real(val2(:,1)),size(X))); h.EdgeColor = 'None';
+
+
