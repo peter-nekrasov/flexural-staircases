@@ -21,7 +21,7 @@ if true
     wtarg = cos_func(targ.r(1,:),d,A) ;
     iout = targ.r(2,:) > wtarg(2,:);
     src = []; src.r = [0;-2]; src.n = [1;0];
-    src = []; src.r = [0;2]; src.n = [1;0];
+    % src = []; src.r = [0;2]; src.n = [1;0];
 else
     chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
     targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);

@@ -70,7 +70,7 @@ norm(val - val_true,'fro')/norm(val_true,'fro')
 norm(grad - grad_true,'fro')/norm(grad_true,'fro')
 norm(hess - hess_true,'fro')/norm(hess_true,'fro')
 
-% %%
+%%
 figure(2);clf
 i = 1;
 subplot(1,3,1)
@@ -82,7 +82,7 @@ h = pcolor(X,Y,reshape(real(grad_true(i,:,2)),size(X))); h.EdgeColor = 'None';
 colorbar
 
 subplot(1,3,3)
-h = pcolor(X,Y,reshape(abs(grad(i,:,2)-grad_true(i,:,2)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y,reshape(log10(abs(grad(i,:,2)-grad_true(i,:,2))),size(X))); h.EdgeColor = 'None';
 colorbar
 
 %%

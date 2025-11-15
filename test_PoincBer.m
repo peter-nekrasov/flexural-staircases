@@ -179,7 +179,70 @@ norm(a-b) / norm(a)
 % up - up2
 
 
+%%
 
+
+d = 1;
+
+ht = 1.02*d; hb = -1.02*d;
+l = 2;
+npxy = 40;
+
+
+nnode = 100;
+ts = linspace(-pi/d,pi/d,nnode);
+ts = ts(2:end);
+
+
+[xs,ws] = lege.exps(12); 
+xs = 0.5*(xs(:).'+1); ws = 0.5*ws(:).';
+
+ts = pi/d*[-xs, xs];
+
+ws = pi/d*[ws,ws]/2/pi;
+
+xi = ts - 0.3i*sin(ts*d);
+xip = ws.*(1 - 0.3i*d*cos(ts*d));
+
+skern_0 = kernel('l','s');
+s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+
+[pxys, cs] = build_pxys(0,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
+spkern = kernel(@(s,t) quasi_lap_kern(s,t,'sp',xi,d,pxys,cs,l,1));
+spkern_0 = kernel('l','sp');
+
+src = []; src.r = [0;0]; src.n = [1;0];
+targ = []; targ.r = [0.2;0.2]; targ.n = [1;0];
+
+u_kap = spkern.eval(src,targ);
+u_0 = spkern_0.eval(src,targ)
+
+u = xip*u_kap
+err = abs(u - u_0)
+
+
+figure(1);clf
+plot(ts, [real(u_kap), imag(u_kap)],'.')
+
+
+
+
+%%
+
+zk = 1;
+skern_0 = kernel('h','s',zk);
+s2trkern = kernel([kernel('h','s',zk);kernel('h','sp',zk)]);
+
+[pxys, cs] = build_pxys(zk,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
+skern = kernel(@(s,t) new_green(s.r,t.r,zk,xi,d,pxys,cs,l,1));
+
+
+u_kap = skern.eval(src,targ);
+u_0 = skern_0.eval(src,targ)
+
+u = xip*u_kap * ws
+
+u - u_0
 
 
 function [r,d,d2] = cos_func(t,d,A)
