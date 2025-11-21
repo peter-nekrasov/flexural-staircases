@@ -1,8 +1,9 @@
 zk = 1.2;
-d = 1.2;
+d = 1.;
 nu = 0.3;
 
 kappa = pi/d;
+kappa = 0.6;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);
@@ -20,12 +21,14 @@ if true
     iout = targ.r(2,:) > wtarg(2,:);
     src = []; src.r = [0;-2]; src.n = [1;0];
     % src = []; src.r = [0;2]; src.n = [1;0];
+    coefs = 1;
 else
-    chnkr = chunkerfunc(@(t) starfish(t,3,0.1),struct('eps',1e-10,'maxchunklen',.1)); chnkr = 0.25*chnkr;
+    chnkr = chunkerfunc(@(t) starfish(t,3,0.1),struct('eps',1e-10,'maxchunklen',0.4)); chnkr = 0.25*chnkr;
     chnkr = chnkr*1.3;
     targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
     iout = ~chunkerinterior(chnkr,targmod);
-    src = []; src.r = [-0.01;-0.01]; src.n = [1;0];
+    src = []; src.r = [[-0.01;-0.01], [0.05;0.02]]; %src.n = [1;0];
+    coefs = [1;0];
 end
 
 targout = []; targout.r = targ.r(:,iout);
@@ -81,7 +84,27 @@ sysmat1_0 = chunkermat(chnkr,fkern1, opts);
 D_0 = chunkermat(chnkr, double, opts);
 H_0 = chunkermat(chnkr, hilbert, opts2); 
 
+% sysmat1 = sysmat1 + sysmat1_0; D = D_0; H = H_0;
+
 sysmat1 = sysmat1 + sysmat1_0; D = D + D_0; H = H + H_0;
+
+% 
+% ising = 1;
+% fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,pxys_l,cs_l,l,ising,nu);
+% double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,pxys_l,cs_l,l,ising);
+% hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys_l,cs_l,l,ising);
+% 
+% opts = [];
+% opts.sing = 'log';
+% 
+% opts2 = [];
+% opts2.sing = 'pv';
+% 
+% % building system matrix
+% 
+% sysmat1 = chunkermat(chnkr,fkern1, opts);
+% D = chunkermat(chnkr, double, opts);
+% H = chunkermat(chnkr, hilbert, opts2); 
 
 sysmat = zeros(2*chnkr.npt);
 sysmat(1:2:end,1:2:end) = sysmat1(1:4:end,1:2:end) + sysmat1(3:4:end,1:2:end)*H  - 2*((1+nu)/2)^2*D*D;
@@ -102,7 +125,7 @@ fprintf('%5.2e s : time to assemble matrix\n',t1)
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,1);
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,1,nu);
 
-rhs = -bskern(src,chnkr);
+rhs = -bskern(src,chnkr)*coefs;
 
 % Solving linear system
 sol = sys\rhs;
@@ -125,7 +148,7 @@ uscat = uscat + ikern(chnkr,targout) * (dens_comb .* wts(:));
 t2 = toc(start1);
 fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
 
-uin = skern(src,targout);
+uin = skern(src,targout)*coefs;
 utot = uscat(:)+uin(:);
 
 
@@ -144,11 +167,77 @@ quiver(chnkr)
 hold on
 plot(chnkrs,'k.')
 scatter(src.r(1,:),src.r(2,:))
-% h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
-h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
+% h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+% clim(2e-10*[-1,1])
 colorbar
 hold off
 axis equal
+
+% %%
+% figure(3)
+% 
+% plot(chnkr.r(1,:), sol(1:2:end),'.')
+% hold on
+% plot(chnkr.r(1,:)+d, sol(1:2:end),'.')
+% % plot(chnkr.r(1,:), sol(2:2:end),'.')
+% % plot(chnkr.r(1,:)+d, sol(2:2:end),'.')
+% 
+% hold off
+
+%%
+
+
+[xs,ws] = lege.exps(60); 
+xs = 0.5*(xs(:).'+1); ws = 0.5*ws(:).';
+
+ts = pi/d*[-xs, xs];
+
+ws = pi/d*[ws,ws]/2/pi;
+
+xi = ts - 0.3i*sin(ts*d);
+xip = ws.*(1 - 0.3i*d*cos(ts*d));
+
+skern_0 = kernel('l','s');
+s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+npxy = 40;
+[pxys, cs] = build_pxys(0,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
+
+
+src = []; src.r = [0;0]; src.n = chnkr.n(:,1); src.d = chnkr.d(:,1); src.d2 = chnkr.d2(:,1);
+targ = []; targ.r = [0.4;0.]; targ.n = chnkr.n(:,100); targ.d = chnkr.d(:,100); targ.d2 = chnkr.d2(:,100);
+
+free_kap = 0;
+
+
+vals = zeros(4,2,length(xi));
+for i = 1:length(xi)
+
+    l=2; N = 40; a = 15; M = 1e4;
+ns = (0:N).';
+sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
+sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
+sn = cat(3,sn1,sn2);
+
+free_i = chnk.flex2dquas.kern(zk, src, targ, 'free_plate',xi(i),d,sn,pxys_l,cs(:,i),l,1,nu);
+vals(:,:,i) = free_i;
+free_kap = free_kap + free_i * xip(i);
+end
+
+
+
+free_0 = chnk.flex2d.kern(zk, src, targ, 'free_plate',nu);
+
+err = abs(free_kap - free_0)
+free_kap
+free_0
+
+
+
+figure(1);clf
+i = 1; j = 1;
+plot(ts, [squeeze(real(vals(i,j,:))), squeeze(imag(vals(i,j,:)))],'.')
+% 
 
 
 

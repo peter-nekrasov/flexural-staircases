@@ -26,7 +26,7 @@ targ.r = [X(:).';Y(:).'];
 targ.n = [1;1]/sqrt(2) + 0*targ.r;
 
 
-u = quasi_lap_kern(src,targ,'d',kappa,d,pxys,cs,l,1);
+u = chnk.lap2dquas.kern(src,targ,'d',kappa,d,pxys,cs,l,1);
 
 
 figure(1);clf
@@ -57,7 +57,7 @@ kappas = 1e-3 * exp(1i*thetas);
 src = []; src.r = [0;0];src.n = [1;0];
 targ = []; targ.r = [0.2;.2];
 
-u = quasi_lap_kern(src,targ,'hilb',kappas,d,pxys,cs,l,1);
+u = chnk.lap2dquas.kern(src,targ,'hilb',kappas,d,pxys,cs,l,1);
 
 figure(4);clf
 plot(thetas, imag(u),'.')
@@ -83,15 +83,15 @@ hold off
 axis equal
 
 
-dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l,1));
+dkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,pxys,cs,l,1));
 dkern.sing = 'smooth';
-hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
+hkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
 hkern.sing = 'pv';
 
 dmat = chunkermat(chnkr,dkern);
 hmat = chunkermat(chnkr,hkern);
 
-rhs = quasi_lap_kern(src,chnkr,'s',kappa,d,pxys,cs,l);
+rhs = chnk.lap2dquas.kern(src,chnkr,'s',kappa,d,pxys,cs,l);
 a = 0.25*hmat * (hmat * rhs);
 b = -0.25*rhs + dmat * (dmat * rhs);
 
@@ -121,15 +121,15 @@ hold off
 axis equal
 
 
-dkern = kernel(@(s,t) quasi_lap_kern(s,t,'d',kappa,d,pxys,cs,l,1));
+dkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,pxys,cs,l,1));
 dkern.sing = 'smooth';
-hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
+hkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
 hkern.sing = 'pv';
 
 dmat = chunkermat(chnkr,dkern);
 hmat = chunkermat(chnkr,hkern);
 
-rhs = quasi_lap_kern(src,chnkr,'s',kappa,d,pxys,cs,l);
+rhs = chnk.lap2dquas.kern(src,chnkr,'s',kappa,d,pxys,cs,l);
 
 a = 0.25*hmat * (hmat * rhs);
 b = -0.25*rhs + dmat * (dmat * rhs);
@@ -160,23 +160,27 @@ b = -0.25*rhs + dmat_0 * (dmat_0 * rhs);
 
 norm(a-b) / norm(a)
 
-% %%
-% hkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
-% hpkern = kernel(@(s,t) quasi_lap_kern(s,t,'hilbprime',kappa,d,pxys,cs,l,1));
-% 
-% src = []; src.r = [0;0]; src.n = [1;0];
-% 
-% targ = []; targ.r = [1;1]; targ.n = [0.2;1]; targ.n = targ.n/vecnorm(targ.n);
-% 
-% up = hpkern.eval(src,targ);
-% 
-% h = 1e-3;
-% targh = []; targh.r = [1;1] + [-h,h] .* [-targ.n(2);targ.n(1)]; 
-% u = hkern.eval(src,targh);
-% 
-% up2 = (u(2)-u(1))/2/h
-% 
-% up - up2
+%%
+hkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys,cs,l,1));
+hpkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'hilbprime',kappa,d,pxys,cs,l,1));
+
+src = []; src.r = [0;0]; src.n = [1;0];
+
+targ = []; targ.r = [1;1]; targ.n = [0.2;1]; targ.n = targ.n/vecnorm(targ.n);
+
+targ.n = chnkr.n(:,1);
+
+
+up = hpkern.eval(src,targ);
+
+h = 1e-3;
+targh = []; targh.r = [1;1] + [-h,h] .* [-targ.n(2);targ.n(1)]; 
+targh = []; targh.r = [1;1] + [-h,h] .* chnkr.d(:,1)/vecnorm(chnkr.d(:,1)); 
+u = hkern.eval(src,targh);
+
+up2 = (u(2)-u(1))/2/h
+
+up - up2
 
 
 %%
@@ -208,7 +212,7 @@ skern_0 = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
 [pxys, cs] = build_pxys(0,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
-spkern = kernel(@(s,t) quasi_lap_kern(s,t,'sp',xi,d,pxys,cs,l,1));
+spkern = kernel(@(s,t) chnk.lap2dquas.kern(s,t,'sp',xi,d,pxys,cs,l,1));
 spkern_0 = kernel('l','sp');
 
 src = []; src.r = [0;0]; src.n = [1;0];
@@ -229,20 +233,20 @@ plot(ts, [real(u_kap), imag(u_kap)],'.')
 
 %%
 
-zk = 1;
-skern_0 = kernel('h','s',zk);
-s2trkern = kernel([kernel('h','s',zk);kernel('h','sp',zk)]);
-
-[pxys, cs] = build_pxys(zk,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
-skern = kernel(@(s,t) new_green(s.r,t.r,zk,xi,d,pxys,cs,l,1));
-
-
-u_kap = skern.eval(src,targ);
-u_0 = skern_0.eval(src,targ)
-
-u = xip*u_kap * ws
-
-u - u_0
+% zk = 1;
+% skern_0 = kernel('h','s',zk);
+% s2trkern = kernel([kernel('h','s',zk);kernel('h','sp',zk)]);
+% 
+% [pxys, cs] = build_pxys(zk,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
+% skern = kernel(@(s,t) new_green(s.r,t.r,zk,xi,d,pxys,cs,l,1));
+% 
+% 
+% u_kap = skern.eval(src,targ);
+% u_0 = skern_0.eval(src,targ)
+% 
+% u = xip*u_kap * ws
+% 
+% u - u_0
 
 
 function [r,d,d2] = cos_func(t,d,A)
