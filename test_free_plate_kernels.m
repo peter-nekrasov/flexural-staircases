@@ -61,6 +61,7 @@ d2dn2 = [	15/4	-77/6	107/6	-13	61/12	-5/6] / h^2;
 d2dtau2 = [-1/560	8/315	-1/5	8/5	-205/72	8/5	-1/5	8/315	-1/560] / h^2;
 d3dn3 = [-17/4	71/4    -59/2	49/2	-41/4	7/4]/h^3;
 ddn = [-137/60	5	-5	10/3	-5/4	1/5]/h;
+ddtau = [1/280	-4/105	1/5	-4/5	0	4/5	-1/5	4/105	-1/280] / h;
 d3dndtau2 = d2dtau2.*ddn.';
 
 targ.r = chnkr.r(:,targind) +  h*(0:5).*chnkr.n(:,targind);
@@ -68,6 +69,7 @@ n_sol = fkern2(src,targ);
 
 targ.r =  chnkr.r(:,targind) +  h*(-4:4).*chnkr.d(:,targind) / vecnorm(chnkr.d(:,targind));
 tau_sol = fkern2(src,targ);
+h_sol = hilb(src,targ);
 
 k1fd = d2dn2*n_sol + nu*d2dtau2*tau_sol;
 
@@ -109,3 +111,5 @@ k22fd = d3dn3*gsol(:,5) + (2-nu)*sum(d3dndtau2.*gsol,'all') ...
     + (1-nu)*kappa(targind)*(d2dtau2*gsol(1,:).' - d2dn2*gsol(:,5)) ;
 
 errsecondrow = [k21ref k21href k22ref] - [k21fd k21hfd k22fd]
+
+errhilb = ddtau*h_sol - hilbprimeref
