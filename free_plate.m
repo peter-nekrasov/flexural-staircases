@@ -1,9 +1,11 @@
 zk = 1.2;
+% zk = 0.4;
 d = 1.;
+% d = 2*pi;
 nu = 0.3;
 
-kappa = pi/d;
-kappa = 0.6;
+% kappa = pi/d;
+kappa = 0.5;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);
@@ -14,14 +16,18 @@ targ = []; targ.r = [X(:).'; Y(:).'];
 
 if true
     cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-    nch = 20; A = 0;
+    % cparams = []; cparams.ta = 0; cparams.tb = d;
+    nch = 20/2; A = 0.2;
     chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
     chnkr = reverse(chnkr);
     wtarg = cos_func(targ.r(1,:),d,A) ;
     iout = targ.r(2,:) > wtarg(2,:);
     src = []; src.r = [0;-2]; src.n = [1;0];
-    % src = []; src.r = [0;2]; src.n = [1;0];
     coefs = 1;
+    % src = []; src.r = [[-0.2;-2],[0.2;-2]]; src.n = [[1;0],[1;0]];
+    % coefs = [1;-1];
+    % src = []; src.r = [0;2]; src.n = [1;0];
+    
 else
     chnkr = chunkerfunc(@(t) starfish(t,3,0.1),struct('eps',1e-10,'maxchunklen',0.4)); chnkr = 0.25*chnkr;
     chnkr = chnkr*1.3;
@@ -45,7 +51,8 @@ skern = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
 ht = 1.02*d; hb = -1.02*d;
-[pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
+% ht = 1.1*d; hb = -1.1*d;
+[pxys_l, cs_l] = build_pxys(0,kappa,d,ht,hb,skern,s2trkern,l,60);
 
 %%
 
@@ -112,6 +119,11 @@ sysmat(2:2:end,1:2:end) = sysmat1(2:4:end,1:2:end) + sysmat1(4:4:end,1:2:end)*H;
 sysmat(1:2:end,2:2:end) = sysmat1(1:4:end,2:2:end) + sysmat1(3:4:end,2:2:end);
 sysmat(2:2:end,2:2:end) = sysmat1(2:4:end,2:2:end) + sysmat1(4:4:end,2:2:end);
 
+% for j = 1:2
+%     for k = 1:2
+% sysmat(j:2:end,k:2:end) = sysmat(j:2:end,k:2:end) + chnkr.wts(:).';
+%     end
+% end
 D = [-1/2 + (1/8)*(1+nu).^2, 0; 0, 1/2];  % jump matrix 
 D = kron(eye(chnkr.npt), D);
 
@@ -163,11 +175,12 @@ us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot;
 
 figure(2);clf
-quiver(chnkr)
+h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
+
 hold on
 plot(chnkrs,'k.')
 scatter(src.r(1,:),src.r(2,:))
-h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
+quiver(chnkr)
 % h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 % clim(2e-10*[-1,1])
 colorbar
@@ -186,60 +199,87 @@ axis equal
 % hold off
 
 %%
-
-
-[xs,ws] = lege.exps(60); 
-xs = 0.5*(xs(:).'+1); ws = 0.5*ws(:).';
-
-ts = pi/d*[-xs, xs];
-
-ws = pi/d*[ws,ws]/2/pi;
-
-xi = ts - 0.3i*sin(ts*d);
-xip = ws.*(1 - 0.3i*d*cos(ts*d));
-
-skern_0 = kernel('l','s');
-s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
-npxy = 40;
-[pxys, cs] = build_pxys(0,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
-
-
-src = []; src.r = [0;0]; src.n = chnkr.n(:,1); src.d = chnkr.d(:,1); src.d2 = chnkr.d2(:,1);
-targ = []; targ.r = [0.4;0.]; targ.n = chnkr.n(:,100); targ.d = chnkr.d(:,100); targ.d2 = chnkr.d2(:,100);
-
-free_kap = 0;
-
-
-vals = zeros(4,2,length(xi));
-for i = 1:length(xi)
-
-    l=2; N = 40; a = 15; M = 1e4;
-ns = (0:N).';
-sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
-sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
-sn = cat(3,sn1,sn2);
-
-free_i = chnk.flex2dquas.kern(zk, src, targ, 'free_plate',xi(i),d,sn,pxys_l,cs(:,i),l,1,nu);
-vals(:,:,i) = free_i;
-free_kap = free_kap + free_i * xip(i);
-end
-
-
-
-free_0 = chnk.flex2d.kern(zk, src, targ, 'free_plate',nu);
-
-err = abs(free_kap - free_0)
-free_kap
-free_0
-
-
-
-figure(1);clf
-i = 1; j = 1;
-plot(ts, [squeeze(real(vals(i,j,:))), squeeze(imag(vals(i,j,:)))],'.')
 % 
+% 
+% [xs,ws] = lege.exps(60); 
+% xs = 0.5*(xs(:).'+1); ws = 0.5*ws(:).';
+% 
+% ts = pi/d*[-xs, xs];
+% 
+% ws = pi/d*[ws,ws]/2/pi;
+% 
+% xi = ts - 0.3i*sin(ts*d);
+% xip = ws.*(1 - 0.3i*d*cos(ts*d));
+% 
+% skern_0 = kernel('l','s');
+% s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+% npxy = 40;
+% [pxys, cs] = build_pxys(0,xi,d,ht,hb,skern_0,s2trkern,l,npxy);
+% 
+% 
+% src = []; src.r = [0;0]; src.n = chnkr.n(:,1); src.d = chnkr.d(:,1); src.d2 = chnkr.d2(:,1);
+% targ = []; targ.r = [0.4;0.]; targ.n = chnkr.n(:,100); targ.d = chnkr.d(:,100); targ.d2 = chnkr.d2(:,100);
+% 
+% free_kap = 0;
+% 
+% 
+% vals = zeros(4,2,length(xi));
+% for i = 1:length(xi)
+% 
+%     l=2; N = 40; a = 15; M = 1e4;
+% ns = (0:N).';
+% sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
+% sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,xi(i),(exp(1i*xi(i)*d)),a,M,l+1);
+% sn = cat(3,sn1,sn2);
+% 
+% free_i = chnk.flex2dquas.kern(zk, src, targ, 'free_plate',xi(i),d,sn,pxys_l,cs(:,i),l,1,nu);
+% vals(:,:,i) = free_i;
+% free_kap = free_kap + free_i * xip(i);
+% end
+% 
+% 
+% 
+% free_0 = chnk.flex2d.kern(zk, src, targ, 'free_plate',nu);
+% 
+% err = abs(free_kap - free_0)
+% free_kap
+% free_0
 
 
+
+% figure(1);clf
+% i = 1; j = 1;
+% plot(ts, [squeeze(real(vals(i,j,:))), squeeze(imag(vals(i,j,:)))],'.')
+% % 
+
+% %%
+% 
+% [U,s,V] = svd(sys);
+% figure(1);clf
+% plot(log10(diag(s)),'.')
+% %%
+% v = V(:,end);
+% plot(chnkr.r(1,:),imag(v(1:2:end)),'.')
+% hold on
+% plot(chnkr.r(1,:),imag(v(2:2:end)),'.')
+% hold off
+% 
+% 
+% 
+% % %%
+% a = exp(1i*kappa*chnkr.r(1,:).');
+% % a = 1+0.*chnkr.r(1,:).';
+% b = H*a;
+% 
+% c = mean(b./a);
+% 
+% % norm(b - c*a)
+% 
+% % plot(chnkr.r(1,:),real(a),'.')
+% plot(chnkr.r(1,:),real(b./a),'.')
+% hold on
+% % plot(chnkr.r(1,:),real(b),'.')
+% hold off
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
