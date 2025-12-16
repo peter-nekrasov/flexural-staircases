@@ -26,6 +26,16 @@ case {'sp', 'sprime'} % normal derivative of flexural wave single layer
    [~,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l);  
    submat = 1/(2*zk^2).*(grad(:,:,1).*nxtarg + grad(:,:,2).*nytarg);
 
+case {'d', 'double'} % normal derivative of flexural wave single layer
+
+    srcnorm = srcinfo.n;
+    nx = repmat((srcnorm(1,:)).',1,ns);
+    ny = repmat((srcnorm(2,:)).',1,ns);
+    
+    [~,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l);  
+    submat = -1/(2*zk^2).*(grad(:,:,1).*nx + grad(:,:,2).*ny);
+
+
 %%% CLAMPED PLATE KERNELS
 
 % boundary conditions applied to a point source

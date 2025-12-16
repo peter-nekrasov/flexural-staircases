@@ -1,4 +1,4 @@
-function submat = quasi_lap_kern(srcinfo,targinfo,type,kappa,d,pxys,cs,l,ising,varargin)
+function submat = kern(srcinfo,targinfo,type,kappa,d,pxys,cs,l,ising,varargin)
 %CHNK.LAP2D.KERN standard Laplace layer potential kernels in 2D
 %
 % Syntax: submat = kern(srcinfo,targinfo,type,varargin)
