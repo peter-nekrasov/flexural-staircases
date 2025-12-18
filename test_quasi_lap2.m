@@ -1,40 +1,69 @@
 zk = 0;
-kappa = pi/d-0.1+0.4i;
+d = 1;
+kappa = 0.4;
 
-d = 0.7;
 
-n = 100;
-skern = kernel('l','s');
-spkern = kernel('l','sp');
+skern_hq = kernel('hq','sp',zk,kappa,d);
 
-skern_hq = kernel('hq','s',zk,kappa,d);
-
+l = 2;
 % srcs = (-1:1).*[d;0]; alphas = exp(1i*kappa*d * (-1:1).');
-srcs = (-2:2).*[d;0]; alphas = exp(1i*kappa*d * (-2:2).');
+srcs = (-l:l).*[d;0]; alphas = exp(1i*kappa*d * (-l:l).');
 srcinfo = []; srcinfo.r = srcs; srcinfo.n = [1;0] + 0*srcs;
 
-
-N = 40;
-ns = 0:40;
-
+N = 30;
+ns = 1:N;
+% ns = [-ns,ns];
 xn = 1;
 
-sn = 1;
+
+sn = 0;
+s0 = 0;
+for j = [-l:-1, 1:l]
+    sn = sn + j.^-ns.*exp(1i*kappa*d * j);
+    s0 = s0 + log(j*d).*exp(1i*kappa*d * j);
+end
+
+sn = -sn + polylog(ns,exp(1i*kappa*d)) + (-1).^-ns.*polylog(ns,exp(-1i*kappa*d));
+
+sn = sn./ns./d.^ns;
+
+sn = sn / 2 / pi ;
+s0 = quasi_dual_sum(0,d/2,0,kappa,d).'- green([0;0],[0;d/2],kappa,d,0,sn,l,1);
+
+
+% sum_n (r/d)^n /ns sum_j (j).^-ns.*exp(1i*kappa*d * j);
+
 
 
 
 %%
 nplot = 100;
 XX = linspace(-1.3*d/2,1.3*d/2,nplot);
-YY = linspace(-1.3*3*d/2,1.3*3*d/2,nplot);
+YY = linspace(-1.3*4*d/2,1.3*4*d/2,nplot);
+YY = linspace(0.2,1.3*4*d/2,nplot);
+% YY = XX;
 [X,Y] = meshgrid(XX,YY);
 
 targs = [X(:).';Y(:).'];
 
 % us = skern.eval(struct('r',srcall),struct('r',targs))*csall;
-us = skern.eval(srcinfo,struct('r',targs))*alphas +  skern.eval(pxys,struct('r',targs))*cs;
+% us = skern.eval(srcinfo,struct('r',targs))*alphas +  skern.eval(pxys,struct('r',targs))*cs;
 
-us_0 = skern_hq.eval(struct('r',[0;0]),struct('r',targs));
+% u0 = green([0;0],[0;0],kappa,d,sn,l,1);
+% us_0 = skern_hq.eval(struct('r',[0;0]),struct('r',targs));
+% us_0 = skern_hq.eval(struct('r',[0;0]),struct('r',targs,'n',[1;1]+0*targs));
+tic;
+[us_0,grad_0,hess_0] = quasi_dual_sum(targs(1,:),targs(2,:),0,kappa,d);
+toc;
+us_0 = us_0(:);
+grad_0 = reshape(grad_0,numel(X),2);
+hess_0 = reshape(hess_0,numel(X),3);
+
+tic;
+[us,grad,hess] = green([0;0],targs,kappa,d,s0,sn,l,1);
+toc;
+
+% us = grad(:,1) + grad(:,2);
 
 %%
 figure(3);
@@ -47,22 +76,23 @@ h = pcolor(X,Y,reshape(abs(us_0),size(X))); h.EdgeColor = 'None';
 colorbar
 
 subplot(1,3,3)
-h = pcolor(X,Y,reshape(log10(abs(us-us_0)),size(X))); h.EdgeColor = 'None';
+% h = pcolor(X,Y,reshape(log10(abs(us-us_0)),size(X))); h.EdgeColor = 'None';
+% h = pcolor(X,Y,reshape(log10(vecnorm(grad(:,:)-grad_0,2,2)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y,reshape(log10(vecnorm(hess(:,:)-hess_0,2,2)),size(X))); h.EdgeColor = 'None';
 % h = pcolor(X,Y,reshape(abs(abs(us)-abs(us_0)),size(X))); h.EdgeColor = 'None';
 hold on
-scatter(rup(1,:), rup(2,:),2,'.')
-scatter(rdw(1,:), rdw(2,:),2,'.')
-scatter(rlf(1,:), rlf(2,:),2,'.')
-scatter(rrt(1,:), rrt(2,:),2,'.')
-scatter(srcall(1,:), srcall(2,:),2,'.')
+scatter(srcs(1,:), srcs(2,:),2,'.')
 hold off
 colorbar
 
 
 norm(us-us_0)/norm(us_0)
+norm(grad(:,:)-grad_0)/norm(grad_0)
+norm(hess(:,:)-hess_0)/norm(hess_0)
+norm(hess(:,2:3)-hess_0(:,2:3))/norm(hess_0)
 
 
-function [val,grad,hess] = green(src,targ,kappa,d,sn,l,ising)
+function [val,grad,hess] = green(src,targ,kappa,d,s0,sn,l,ising)
 %CHNK.HELM2DQUAS.GREEN evaluate the quasiperiodic Helmholtz Green's function
 % for the given sources and targets
 %
@@ -106,7 +136,7 @@ r = sqrt(r2);
 
 npt = size(r,1);
 
-ythresh = 2*d/2;
+ythresh = 1.5*d/2;
 iclose = abs(ry) < ythresh;
 ifar = ~iclose;
 
@@ -130,7 +160,7 @@ if nargout > 2
 hess = zeros(nkappa,npt,3);
 end
 
-zk = 2;
+zk = 0;
 tol = 1e-10;
 Lbd = sqrt((log(tol))^2/real(ythresh)^2 + real(zk)^2);
 
@@ -195,61 +225,61 @@ if ~isempty(rxclose)
         end
     end
 
-    N = size(sn,2)-1;
-    ns = (0:N);
-    ns_use = (0:N+2);
+    N = size(sn,2);
+    ns = 1:N;
     
-    Rns = rclose.^ns_use;
+    Rns = rclose.^ns;
     
-    % t1 = tic;
     eip = (rxclose+1i*ryclose)./rclose;
-    eipn = reshape(eip.^ns,1,[], N+1);
+    eipn = reshape(eip.^ns,1,[], N);
     cs = (eipn+1./eipn)/2;
     
-    Rns = reshape(Rns,1,[],N+3);
-    sn = reshape(sn,nkappa, 1, N+1);
+    Rns = reshape(Rns,1,[],N);
+    sn = reshape(sn,nkappa, 1, N);
     
-    tmp = reshape(Rns(:,:,2:end-2).*cs(:,:,2:end),[],N);
-    val_far = 0.25*1i*Rns(:,:,1).*sn(:,:,1) + 0.5*1i*sn(:,2:end)*tmp.';
+    tmp = reshape(Rns.*cs,[],N);
+    val_far = sn(:,:)*tmp.' + s0;
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
-        DJs = cat(3,-Js(:,:,2),.5*(Js(:,:,1:end-3)-Js(:,:,3:end-1)))*zk;
+        DRns = ns.*rclose.^(ns-1);
+        DRns = reshape(DRns,1,[],N);
         ss = (eipn-1./eipn)/2i;
             
-        tmp = reshape(DJs(:,:,2:end).*cs(:,:,2:end),[],N);
-        grad_far_p = 0.25*1i*DJs(:,:,1).*sn(:,:,1) + 0.5*1i*sn(:,2:end)*tmp.';
-        tmp = reshape(Js(:,:,2:end-2).*ss(:,:,2:end),[],N)./rclose;
-        grad_far_t = (0.5*1i*((-reshape((1:N),1,[]).*sn(:,2:end))*tmp.'));
+        tmp = reshape(DRns.*cs,[],N);
+        grad_far_p = sn(:,:)*tmp.';
+        tmp = reshape(Rns.*ss,[],N)./rclose;
+        grad_far_t = ((-reshape((1:N),1,[]).*sn(:,:))*tmp.');
         
-        grad_far = cat(3,cs(:,:,2).*grad_far_p - ss(:,:,2).*grad_far_t, ss(:,:,2).*grad_far_p + cs(:,:,2).*grad_far_t);
+        grad_far = cat(3,cs(:,:,1).*grad_far_p - ss(:,:,1).*grad_far_t, ss(:,:,1).*grad_far_p + cs(:,:,1).*grad_far_t);
         grad(:,iclose,:) = grad_near + grad_far; 
     end
     if nargout > 2
-        DDJs = cat(3,.5*(Js(:,:,3)-Js(:,:,1)),.25*(Js(:,:,4)-3*Js(:,:,2)),.25*(Js(:,:,1:end-4)-2*Js(:,:,3:end-2)+Js(:,:,5:end)))*zk^2;
+        DDRns = ns.*(ns-1).*rclose.^(ns-2);
+        DDRns = reshape(DDRns,1,[],N);
         rclose = rclose.';
         rxclose = rxclose.';
         ryclose = ryclose.';
         ns = reshape(ns,1,1,[]);
 
-        tmp_n = rclose.^(-4).*(-ns.*ryclose.*Js(:,:,1:end-2).*(ns.*ryclose.*cs+2*rxclose.*ss)+ ...
-            rclose.*ryclose.*(ryclose.*cs + 2*ns.*rxclose.*ss).*DJs+ ...
-            rclose.^2.*rxclose.^2.*cs.*DDJs);
-        tmp_n = reshape(tmp_n,[],N+1);
-        hess_far_xx = 0.25*1i*tmp_n(:,1).'.*sn(:,1)+.5*1i*sn(:,2:end)*tmp_n(:,2:end).';
+        tmp_n = rclose.^(-4).*(-ns.*ryclose.*Rns(:,:,:).*(ns.*ryclose.*cs+2*rxclose.*ss)+ ...
+            rclose.*ryclose.*(ryclose.*cs + 2*ns.*rxclose.*ss).*DRns+ ...
+            rclose.^2.*rxclose.^2.*cs.*DDRns);
+        tmp_n = reshape(tmp_n,[],N);
+        hess_far_xx = sn(:,:)*tmp_n(:,:).';
 
-        tmp_n = ns.*Js(:,:,1:end-2).*(ns.*rxclose.*ryclose.*cs+(rxclose.^2-ryclose.^2).*ss).*rclose.^(-4) ...
-            +rclose.^(-3).*(-(rxclose.*ryclose.*cs+ns.*(rxclose.^2-ryclose.^2).*ss).*DJs+...
-            rclose.*rxclose.*ryclose.*cs.*DDJs);
+        tmp_n = ns.*Rns(:,:,:).*(ns.*rxclose.*ryclose.*cs+(rxclose.^2-ryclose.^2).*ss).*rclose.^(-4) ...
+            +rclose.^(-3).*(-(rxclose.*ryclose.*cs+ns.*(rxclose.^2-ryclose.^2).*ss).*DRns+...
+            rclose.*rxclose.*ryclose.*cs.*DDRns);
 
-        tmp_n = reshape(tmp_n,[],N+1);
-        hess_far_xy = 0.25*1i*tmp_n(:,1).'.*sn(:,1)+.5*1i*sn(:,2:end)*tmp_n(:,2:end).';
+        tmp_n = reshape(tmp_n,[],N);
+        hess_far_xy = sn(:,:)*tmp_n(:,:).';
 
-        tmp_n = rclose.^(-4).*(-ns.*rxclose.*Js(:,:,1:end-2).*(ns.*rxclose.*cs-2*ryclose.*ss)+ ...
-            rclose.*rxclose.*(rxclose.*cs - 2*ns.*ryclose.*ss).*DJs+ ...
-            rclose.^2.*ryclose.^2.*cs.*DDJs);
-        tmp_n = reshape(tmp_n,[],N+1);
-        hess_far_yy = 0.25*1i*tmp_n(:,1).'.*sn(:,1)+.5*1i*sn(:,2:end)*tmp_n(:,2:end).';
+        tmp_n = rclose.^(-4).*(-ns.*rxclose.*Rns(:,:,:).*(ns.*rxclose.*cs-2*ryclose.*ss)+ ...
+            rclose.*rxclose.*(rxclose.*cs - 2*ns.*ryclose.*ss).*DRns+ ...
+            rclose.^2.*ryclose.^2.*cs.*DDRns);
+        tmp_n = reshape(tmp_n,[],N);
+        hess_far_yy = sn(:,:)*tmp_n(:,:).';
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
 

@@ -1,4 +1,4 @@
-function submat= kern(zk,srcinfo,targinfo,type,kappa,d,Sn,pxys_l,cs_l,l,ising,varargin)
+function submat= kern(zk,srcinfo,targinfo,type,kappa,d,Sn,s0_l,sn_l,l,ising,varargin)
 
 % 
 % see also CHNK.FLEX2D.KERN
@@ -258,8 +258,8 @@ case {'free_plate'}
 
    kappatarg = numer ./ denom; % target curvature
 
-   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,pxys_l,cs_l,l,0);
-   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,pxys_l,cs_l,l,0);
+   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,s0_l,sn_l,l,0);
+   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,s0_l,sn_l,l,0);
    hilb = (1+nu) * hilb / 2;
    hilbp = (1+nu) * hilbp / 2;
    

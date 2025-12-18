@@ -14,7 +14,7 @@ yy = xx;
 targ = []; targ.r = [X(:).'; Y(:).'];
 
 
-if true
+if false
     cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
     % cparams = []; cparams.ta = 0; cparams.tb = d;
     nch = 20/2; A = 0.2;
@@ -47,20 +47,35 @@ sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 sn = cat(3,sn1,sn2);
 
-skern = kernel('l','s');
-s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+% skern = kernel('l','s');
+% s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
+% 
+% ht = 1.02*d; hb = -1.02*d;
+% % ht = 1.1*d; hb = -1.1*d;
+% [pxys_l, cs_l] = build_pxys(0,kappa,d,ht,hb,skern,s2trkern,l,60);
 
-ht = 1.02*d; hb = -1.02*d;
-% ht = 1.1*d; hb = -1.1*d;
-[pxys_l, cs_l] = build_pxys(0,kappa,d,ht,hb,skern,s2trkern,l,60);
+ns = 1:N;
+sn_l = 0;
+s0_l = 0;
+for j = [-l:-1, 1:l]
+    sn_l = sn_l + j.^-ns.*exp(1i*kappa*d * j);
+    s0_l = s0_l + log(j*d).*exp(1i*kappa*d * j);
+end
+
+sn_l = -sn_l + polylog(ns,exp(1i*kappa*d)) + (-1).^-ns.*polylog(ns,exp(-1i*kappa*d));
+sn_l = sn_l./ns./d.^ns;
+sn_l = sn_l / 2 / pi ;
+s0_l = quasi_dual_sum(0,d/2,0,kappa,d).'- chnk.lap2dquas.green([0;0],[0;d/2],kappa,d,0,sn_l,l,1);
+
+
 
 %%
 
 
 ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,pxys_l,cs_l,l,ising,nu);
-double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,pxys_l,cs_l,l,ising);
-hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,pxys_l,cs_l,l,ising);
+fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
+double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
+hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
 opts = [];
 opts.sing = 'smooth';
 
@@ -134,8 +149,8 @@ fprintf('%5.2e s : time to assemble matrix\n',t1)
 
 %%
 
-skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,1);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,1,nu);
+skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,s0_l,sn_l,l,1);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa,d,sn,s0_l,sn_l,l,1,nu);
 
 rhs = -bskern(src,chnkr)*coefs;
 
@@ -143,7 +158,7 @@ rhs = -bskern(src,chnkr)*coefs;
 sol = sys\rhs;
 
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,pxys_l,cs_l,l,0,nu);
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
 ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate_eval',nu);
 
 
