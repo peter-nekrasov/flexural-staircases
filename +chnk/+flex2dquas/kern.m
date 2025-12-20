@@ -8,6 +8,7 @@ targ = targinfo.r;
 
 [~,ns] = size(src);
 [~,nt] = size(targ);
+nkappa = length(kappa);
 
 %%% STANDARD LAYER POTENTIALS
 
@@ -19,18 +20,20 @@ case {'s', 'single'} % flexural wave single layer
 
 case {'sp', 'sprime'} % normal derivative of flexural wave single layer
 
-   targnorm = targinfo.n;
-   nxtarg = repmat((targnorm(1,:)).',1,ns);
-   nytarg = repmat((targnorm(2,:)).',1,ns);
+    targnorm = targinfo.n;
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
 
-   [~,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l);  
-   submat = 1/(2*zk^2).*(grad(:,:,1).*nxtarg + grad(:,:,2).*nytarg);
+    [~,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l);  
+    submat = 1/(2*zk^2).*(grad(:,:,1).*nxtarg + grad(:,:,2).*nytarg);
 
 case {'d', 'double'} % normal derivative of flexural wave single layer
 
     srcnorm = srcinfo.n;
-    nx = repmat((srcnorm(1,:)).',1,ns);
-    ny = repmat((srcnorm(2,:)).',1,ns);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
     
     [~,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l);  
     submat = -1/(2*zk^2).*(grad(:,:,1).*nx + grad(:,:,2).*ny);
@@ -40,34 +43,41 @@ case {'d', 'double'} % normal derivative of flexural wave single layer
 
 % boundary conditions applied to a point source
 case {'clamped_plate_bcs'}
-    nxtarg = targinfo.n(1,:).'; 
-    nytarg = targinfo.n(2,:).';  
-    submat = zeros(2*nt,ns);
+    targnorm = targinfo.n;
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
     
     [val, grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
     
     firstbc = 1/(2*zk^2).*val ;
     secondbc = 1/(2*zk^2).*(grad(:, :, 1).*nxtarg + grad(:, :, 2).*nytarg);
    
-    submat(1:2:end,:) = firstbc;
-    submat(2:2:end,:) = secondbc;
+    submat = zeros(nkappa,2,nt,ns);
+    submat(:,1,:,:) = reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,:) = reshape(secondbc,nkappa,1,nt,[]);
+    submat = reshape(submat, [],ns);
 
 % kernels for the clamped plate integral equation
 case {'clamped_plate'}
    srcnorm = srcinfo.n;
    srctang = srcinfo.d;
-   targnorm = targinfo.n;
 
-   nx = repmat(srcnorm(1,:),nt,1);
-   ny = repmat(srcnorm(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
    
-   nxtarg = repmat((targnorm(1,:)).',1,ns);
-   nytarg = repmat((targnorm(2,:)).',1,ns);
+    targnorm = targinfo.n;
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
+
    
    [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
    
-   dx = repmat(srctang(1,:),nt,1);
-   dy = repmat(srctang(2,:),nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
     
    ds = sqrt(dx.*dx+dy.*dy);
 
@@ -76,13 +86,13 @@ case {'clamped_plate'}
    
    rx = targ(1,:).' - src(1,:);
    ry = targ(2,:).' - src(2,:);
-   r2 = rx.^2 + ry.^2;
-
-   rn = rx.*nx + ry.*ny;
-   rtau = rx.*taux + ry.*tauy;
-   ntargtau = nxtarg.*taux + nytarg.*tauy;
-
-   rntarg = rx.*nxtarg + ry.*nytarg;
+   % r2 = rx.^2 + ry.^2;
+   % 
+   % rn = rx.*nx + ry.*ny;
+   % rtau = rx.*taux + ry.*tauy;
+   % ntargtau = nxtarg.*taux + nytarg.*tauy;
+   % 
+   % rntarg = rx.*nxtarg + ry.*nytarg;
 
    K11 = -(1/(2*zk^2).*(third(:, :, 1).*(nx.*nx.*nx) + third(:, :, 2).*(3*nx.*nx.*ny) +...
        third(:, :, 3).*(3*nx.*ny.*ny) + third(:, :, 4).*(ny.*ny.*ny))) - ...
@@ -105,25 +115,32 @@ case {'clamped_plate'}
          (1/(2*zk^2).*(third(:,:, 1).*(taux.*taux.*nxtarg) +third(:, :, 2).*(taux.*taux.*nytarg + 2*taux.*tauy.*nxtarg) + third(:, :, 3).*(2*taux.*tauy.*nytarg + tauy.*tauy.*nxtarg)+...
          third(:, :,4).*(tauy.*tauy.*nytarg)));
 
-  submat = zeros(2*nt,2*ns);
-  
-  submat(1:2:end,1:2:end) = K11;
-  submat(1:2:end,2:2:end) = K12;
-    
-  submat(2:2:end,1:2:end) = K21;
-  submat(2:2:end,2:2:end) = K22;
+  submat = zeros(nkappa,2,nt,2*ns);
+  submat(:,1,:,1:2:2*ns) = reshape(K11,nkappa,1,nt,[]);
+  submat(:,1,:,2:2:2*ns) = reshape(K12,nkappa,1,nt,[]);
+  submat(:,2,:,1:2:2*ns) = reshape(K21,nkappa,1,nt,[]);
+  submat(:,2,:,2:2:2*ns) = reshape(K22,nkappa,1,nt,[]);
+  submat = reshape(submat, [],2*ns);
+
+  % submat = zeros(2*nt,2*ns);
+  % 
+  % submat(1:2:end,1:2:end) = K11;
+  % submat(1:2:end,2:2:end) = K12;
+  % 
+  % submat(2:2:end,1:2:end) = K21;
+  % submat(2:2:end,2:2:end) = K22;
 
 % clamped plate kernels for plotting
 case {'clamped_plate_eval'}
 
-    submat = zeros(nt,2*ns);
+    submat = zeros(nkappa*nt,2*ns);
 
     srcnorm = srcinfo.n;
     srctang = srcinfo.d;
-    nx = repmat(srcnorm(1,:),nt,1);
-    ny = repmat(srcnorm(2,:),nt,1);
-    dx = repmat(srctang(1,:),nt,1);
-    dy = repmat(srctang(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
     ds = sqrt(dx.*dx+dy.*dy);
 
     taux = dx./ds;
@@ -145,14 +162,14 @@ case {'clamped_plate_eval'}
 % clamped plate kernels for far field evaluation
 case {'clamped_plate_eval_ff'}
 
-    submat = zeros(nt,2*ns);
+    submat = zeros(nkappa*nt,2*ns);
 
     srcnorm = srcinfo.n;
     srctang = srcinfo.d;
-    nx = repmat(srcnorm(1,:),nt,1);
-    ny = repmat(srcnorm(2,:),nt,1);
-    dx = repmat(srctang(1,:),nt,1);
-    dy = repmat(srctang(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
     ds = sqrt(dx.*dx+dy.*dy);
 
     taux = dx./ds;
@@ -175,24 +192,36 @@ case {'clamped_plate_eval_ff'}
 
 % boundary conditions applied to a point source
 case {'free_plate_bcs'}
-    targnorm = targinfo.n;
     targtang = targinfo.d;
     targd2 = targinfo.d2;
     nu = varargin{1};
     
     [~, ~, hess, third] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
 
-    nxtarg = repmat((targnorm(1,:)).',1,ns);
-    nytarg = repmat((targnorm(2,:)).',1,ns);
-    
-    dx1 = repmat((targtang(1,:)).',1,ns);
-    dy1 = repmat((targtang(2,:)).',1,ns);
+    targnorm = targinfo.n;
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
+
+    dx1 = repmat(reshape(targtang(1,:),1,nt,1),nkappa,1,ns);
+    dx1 = reshape(dx1,[],ns);
+    dy1 = repmat(reshape(targtang(2,:),1,nt,1),nkappa,1,ns);
+    dy1 = reshape(dy1,[],ns);
+
+    % dx1 = repmat((targtang(1,:)).',1,ns);
+    % dy1 = repmat((targtang(2,:)).',1,ns);
     
     ds1 = sqrt(dx1.*dx1+dy1.*dy1); 
     
-    d2x1 = repmat((targd2(1,:)).',1,ns);
-    d2y1 = repmat((targd2(2,:)).',1,ns);
+    % d2x1 = repmat((targd2(1,:)).',1,ns);
+    % d2y1 = repmat((targd2(2,:)).',1,ns);
     
+    d2x1 = repmat(reshape(targd2(1,:),1,nt,1),nkappa,1,ns);
+    d2x1 = reshape(d2x1,[],ns);
+    d2y1 = repmat(reshape(targd2(2,:),1,nt,1),nkappa,1,ns);
+    d2y1 = reshape(d2y1,[],ns);
+
     tauxtarg = dx1./ds1;
     tauytarg = dy1./ds1;
     
@@ -212,9 +241,10 @@ case {'free_plate_bcs'}
     (1-nu).*kappatarg.*(1/(2*zk^2).*(hess(:, :, 1).*tauxtarg.*tauxtarg + hess(:, :, 2).*(2*tauxtarg.*tauytarg) + hess(:, :, 3).*tauytarg.*tauytarg)-...
     (1/(2*zk^2).*(hess(:, :, 1).*nxtarg.*nxtarg + hess(:, :, 2).*(2*nxtarg.*nytarg) + hess(:, :, 3).*nytarg.*nytarg)));
 
-    submat = zeros(2*nt,ns);
-    submat(1:2:end,:) = firstbc;
-    submat(2:2:end,:) = secondbc;
+    submat = zeros(nkappa,2,nt,ns);
+    submat(:,1,:,:) = reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,:) = reshape(secondbc,nkappa,1,nt,[]);
+    submat = reshape(submat, [],ns);
 
 % kernels for the free plate integral equation 
 case {'free_plate'}
@@ -227,28 +257,39 @@ case {'free_plate'}
 
    [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
 
-   nx = repmat(srcnorm(1,:),nt,1);
-   ny = repmat(srcnorm(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
 
-   nxtarg = repmat((targnorm(1,:)).',1,ns);
-   nytarg = repmat((targnorm(2,:)).',1,ns);
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
 
-
-   dx = repmat(srctang(1,:),nt,1);
-   dy = repmat(srctang(2,:),nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
 
    ds = sqrt(dx.*dx+dy.*dy); 
 
    taux = dx ./ ds;
    tauy = dy ./ ds;
 
-   dx1 = repmat((targtang(1,:)).',1,ns);
-   dy1 = repmat((targtang(2,:)).',1,ns);
+    dx1 = repmat(reshape(targtang(1,:),1,nt,1),nkappa,1,ns);
+    dx1 = reshape(dx1,[],ns);
+    dy1 = repmat(reshape(targtang(2,:),1,nt,1),nkappa,1,ns);
+    dy1 = reshape(dy1,[],ns);
 
-   ds1 = sqrt(dx1.*dx1+dy1.*dy1); 
-
-   d2x1 = repmat((targd2(1,:)).',1,ns);
-   d2y1 = repmat((targd2(2,:)).',1,ns);
+    % dx1 = repmat((targtang(1,:)).',1,ns);
+    % dy1 = repmat((targtang(2,:)).',1,ns);
+    
+    ds1 = sqrt(dx1.*dx1+dy1.*dy1); 
+    
+    % d2x1 = repmat((targd2(1,:)).',1,ns);
+    % d2y1 = repmat((targd2(2,:)).',1,ns);
+    
+    d2x1 = repmat(reshape(targd2(1,:),1,nt,1),nkappa,1,ns);
+    d2x1 = reshape(d2x1,[],ns);
+    d2y1 = repmat(reshape(targd2(2,:),1,nt,1),nkappa,1,ns);
+    d2y1 = reshape(d2y1,[],ns);
 
    tauxtarg = dx1./ds1;
    tauytarg = dy1./ds1;
@@ -321,7 +362,7 @@ case {'free_plate'}
           fourth(:, :, 4).*(tauytarg.*tauytarg.*nxtarg.*tauy + 2*tauxtarg.*tauytarg.*nytarg.*tauy + tauytarg.*tauytarg.*nytarg.*taux) +...
          fourth(:, :, 5).*(tauytarg.*tauytarg.*nytarg.*tauy))) ;
     
-    submat = zeros(4*nt,2*ns);
+    submat = zeros(4*nkappa*nt,2*ns);
     
     submat(1:4:end,1:2:end) = K11;
     submat(1:4:end,2:2:end) = K12;
@@ -331,6 +372,15 @@ case {'free_plate'}
     
     submat(3:4:end,1:2:end) = K11H;
     submat(4:4:end,1:2:end) = K21H;
+      
+    submat = zeros(nkappa,4,nt,2*ns);
+  submat(:,1,:,1:2:2*ns) = reshape(K11,nkappa,1,nt,[]);
+  submat(:,1,:,2:2:2*ns) = reshape(K12,nkappa,1,nt,[]);
+  submat(:,2,:,1:2:2*ns) = reshape(K21,nkappa,1,nt,[]);
+  submat(:,2,:,2:2:2*ns) = reshape(K22,nkappa,1,nt,[]);
+  submat(:,3,:,1:2:2*ns) = reshape(K11H,nkappa,1,nt,[]);
+  submat(:,4,:,1:2:2*ns) = reshape(K22H,nkappa,1,nt,[]);
+  submat = reshape(submat, [],2*ns);
 
 % free plate kernels used for plotting 
 case {'free_plate_eval'}
@@ -339,11 +389,11 @@ case {'free_plate_eval'}
    nu = varargin{1};
 
    [val,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
-   nx = repmat(srcnorm(1,:),nt,1);
-   ny = repmat(srcnorm(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
 
-   dx = repmat(srctang(1,:),nt,1);
-   dy = repmat(srctang(2,:),nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
 
    ds = sqrt(dx.*dx+dy.*dy);
 
@@ -354,7 +404,7 @@ case {'free_plate_eval'}
    K1H = ((1 + nu)/2).*(-1/(2*zk^2).*(grad(:, :, 1).*(taux) + grad(:, :, 2).*tauy));                    % G_{tauy}
    K2 = 1/(2*zk^2).*val;
 
-   submat = zeros(nt,3*ns);
+   submat = zeros(nkappa*nt,3*ns);
    submat(:,1:3:end) = K1;
    submat(:,2:3:end) = K1H;
    submat(:,3:3:end) = K2;
@@ -366,11 +416,11 @@ case {'free_plate_eval_ff'}
    nu = varargin{1};
 
    [val,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
-   nx = repmat(srcnorm(1,:),nt,1);
-   ny = repmat(srcnorm(2,:),nt,1);
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
 
-   dx = repmat(srctang(1,:),nt,1);
-   dy = repmat(srctang(2,:),nt,1);
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
 
    ds = sqrt(dx.*dx+dy.*dy);
 
@@ -381,7 +431,7 @@ case {'free_plate_eval_ff'}
    K1H = ((1 + nu)/2).*(-1/(2*zk^2).*(grad(:, :, 1).*(taux) + grad(:, :, 2).*tauy));                    % G_{tauy}
    K2 = 1/(2*zk^2).*val;
 
-   submat = zeros(nt,3*ns);
+   submat = zeros(nkappa*nt,3*ns);
    submat(:,1:3:end) = K1;
    submat(:,2:3:end) = K1H;
    submat(:,3:3:end) = K2;
@@ -389,7 +439,10 @@ case {'free_plate_eval_ff'}
 end
 
 if ising == 1
-    submat = submat + chnk.flex2d.kern(zk,srcinfo,targinfo,type,varargin{:});
+    ishape = size(submat);
+    submat = reshape(submat,nkappa,ishape(1)/nkappa,ishape(2));
+    submat = submat + reshape(chnk.flex2d.kern(zk,srcinfo,targinfo,type,varargin{:}),1,ishape(1)/nkappa,ishape(2));
+    submat = reshape(submat,ishape);
 end
 end
 
