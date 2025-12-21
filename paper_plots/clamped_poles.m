@@ -130,7 +130,7 @@ fprintf('%5.2e s : time to assemble matrix\n',t1)
 
 [u,sig,v] = svd(squeeze(sys));
 dens = v(:,end);
-sig(end,end)
+sig(end,end)/sig(1,1)
 
 %%
 

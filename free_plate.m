@@ -6,6 +6,7 @@ nu = 0.3;
 
 % kappa = pi/d;
 % kappa = 0.5;
+kappa = pi/d;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);

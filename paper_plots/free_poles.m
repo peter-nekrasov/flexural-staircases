@@ -1,15 +1,19 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 2;
+zk = 2.29;
 d = 1.2;
 nu = 0.3; 
 
 amp = -0.3;
-nleg = 32;
+nleg = 32*2;
 
 xs = cos((2*(1:nleg)-1)/2/nleg*pi);
 
+tmin = zk*1.1; tmax = pi/d;
 tmin = zk+0.1; tmax = pi/d;
+% tmin = zk+1e-4; tmax = min(2*zk,pi/d);
+% tmin = zk+1e-4; tmax = 0.35;
 % tmin = 1.02; tmax = pi/sys.d;
 % tmin = 1.001; tmax = 1.01;
 tr = (tmax-tmin)*(xs+1)/2+tmin;
@@ -19,6 +23,7 @@ nkappa = length(kappa);
 
 
 nplot = 240;
+nplot = 60;
 xx = linspace(-6*d, 6*d,nplot);
 yy = xx;
 yy = linspace(0, 4*d,nplot/2) - 1.2;
@@ -141,22 +146,24 @@ rts = eig(B);
 
 rts = rts(abs(rts)<1);
 
-rts= rts(abs(imag(rts))<1e-1);
+rts= rts(abs(imag(rts))<1e-3);
 
 rts = (tmax-tmin)*(rts+1)*.5 + tmin;
 
 figure(5)
-plot(kappa,abs(dets))
+plot(kappa,abs(dets),'o-')
 
-figure(4)
-plot(rts,'o')
-title('Poles','Interpreter','latex')
-set(gca,'fontsize',16)
+% figure(4)
+% plot(rts,'o')
+% title('Poles','Interpreter','latex')
+% set(gca,'fontsize',16)
 
 %%
 
 
-kappa_rt = real(rts); nkappa = 1;
+kappa_rt = real(rts); nkappa = length(kappa_rt);
+zk =  2.30387052135484;kappa_rt =pi/d; nkappa = 1;
+if nkappa == 0, return, end
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
 [s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa_rt,l);
@@ -231,8 +238,7 @@ fprintf('%5.2e s : time to assemble matrix\n',t1)
 
 [u,sig,v] = svd(squeeze(sys));
 dens = v(:,end);
-sig(end,end)
-
+sig(end,end)/sig(1,1)
 %%
 
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa_rt,d,sn,s0_l,sn_l,l,1);
@@ -272,7 +278,7 @@ figure(2);clf
 subplot(2,1,1)
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = uscat;
-h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
 plot(chnkrs,'k.','markersize',15)
 c = colorbar;
