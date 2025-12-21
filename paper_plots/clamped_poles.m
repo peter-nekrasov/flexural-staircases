@@ -1,49 +1,44 @@
 %%
 addpath(genpath('../../flexural-staircases'))
-zk = 2;
+zk = 1;
 d = 1.2;
-
-nnode = 61;
-ts = linspace(-pi/d,pi/d,nnode);
-ts = ts(2:end);
-ws = 1/(nnode-1);
+nu = 0.3; 
 
 amp = -0.3;
-kappa = ts + amp*1i*sin(ts*d);
-xip = 1 + amp*1i*d*cos(ts*d);
-ws = ws*xip;
+nleg = 32;
+nleg = 64;
 
+xs = cos((2*(1:nleg)-1)/2/nleg*pi);
+
+tmin = zk+0.1; tmax = pi/d;
+% tmin = 1.02; tmax = pi/sys.d;
+% tmin = 1.001; tmax = 1.01;
+tr = (tmax-tmin)*(xs+1)/2+tmin;
+kappa = tr;
 
 nkappa = length(kappa);
 
 
-%%
-
 nplot = 240;
-xx = linspace(-3*d, 3*d,nplot);
+xx = linspace(-6*d, 6*d,nplot);
 yy = xx;
-yy = linspace(0, 6*d,nplot) - 1.2;
+yy = linspace(0, 4*d,nplot/2) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
 targmod = [];
 targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-% targmod = targ;
+targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
-%%
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
 nch = 20; A = 1;
-% chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 chnkr = reverse(chnkr);
+
 wtarg = cos_func(targmod.r(1,:),d,A) ;
 iout = targmod.r(2,:) > wtarg(2,:);
-
-src = []; src.r = [[0;-2],[d/2;2]];
-src = []; src.r = [[0;-2],[d/2;1]];
-
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
 
@@ -68,30 +63,84 @@ sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
 
 sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
 sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
-toc(start)
+t1 = toc(start);
+fprintf('%5.2e s : time to assemble matrix\n',t1)
+
+dets = zeros(nkappa,1);
+
+for i = 1:nkappa
+    dets(i) = det(2*squeeze(sys(i,:,:)));
+end
+
+%%
+T = cos((0:(nleg-1)).' .*acos(xs(:).')).';
+
+c_cheb = T\dets;
+
+cs = c_cheb/c_cheb(end);
+
+B = .5*ones(nleg-1,2);
+A = spdiags(B,[-1,1],nleg-1,nleg-1);
+A(1,2) = 1/sqrt(2);A(2,1) = 1/sqrt(2);
+en = zeros(1,nleg-1); en(end)=1;
+cs(1) = sqrt(2)*cs(1);
+
+B = A - .5*cs(1:nleg-1)*en;
+
+
+rts = eig(B);
+
+rts = rts(abs(rts)<1);
+
+rts= rts(abs(imag(rts))<1e-3);
+
+rts = (tmax-tmin)*(rts+1)*.5 + tmin;
+
+figure(5)
+plot(kappa,abs(dets))
+
+figure(4);clf
+plot(rts,'o')
+title('Poles','Interpreter','latex')
+set(gca,'fontsize',16)
+
 %%
 
-skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,[],[],l,ising);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,[],[],l,ising);
 
-skern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 's');
+kappa_rt = real(rts); nkappa = 1;
+l=2; N = 40; a = 15; M = 1e4;
+sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
 
-rhs = -bskern(src,chnkr);
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa_rt,d,sn,[],[],l,ising);
+
+curv = signed_curvature(chnkr);
+curv = curv(:);
+
+opts = [];
+opts.sing = 'log';
+
+start = tic;
+sys = chunkermat(chnkr,fkern, opts);
+sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
+
+sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
+sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
+t1 = toc(start);
+fprintf('%5.2e s : time to assemble matrix\n',t1)
+
+[u,sig,v] = svd(squeeze(sys));
+dens = v(:,end);
+sig(end,end)
+
+%%
+
+skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa_rt,d,sn,s0_l,sn_l,l,1);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa_rt,d,sn,s0_l,sn_l,l,1,nu);
 
 % Solving linear system
-sol = 0*rhs;
-for i = 1:nkappa
-sol(i:nkappa:end,:) = (squeeze(sys(i,:,:))\rhs(i:nkappa:end,:))*ws(i);
-end
+sol = dens;
 
-%%
 
-uin = skern_0(src,targout_0);
-if nkappa == 1
-    uin = exp(1i*kappa(:).*nshift(iout).'*d).*skern(src,targout_0)*ws(1);
-end
-
-uscat = 0*uin;
 
 ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,[],[],l,0);
 ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate_eval');
@@ -124,42 +173,24 @@ t2 = toc(start1);
 fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
 
 
-utot = uscat+uin;
-
-
 
 %%
 chnkrs = [];
-for i = -4:4
+for i = -10:10
     chnkrs = [chnkrs, chnkr + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 
-us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
-us(iout) = utot(:,1);
-
-figure(1);clf
-h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
-hold on
-scatter(src.r(1,1),src.r(2,1),400,'r.')
-plot(chnkrs,'k.','markersize',15)
-c = colorbar;
-hold off
-axis equal
-xlim([min(X(:)),max(X(:))])
-ylim([min(Y(:)),max(Y(:))])
-set(gca,'FontSize',18)
-set(gca,'TickLabelInterpreter','latex');
-set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'clamp_acc.pdf','resolution',200)
-% %%
 figure(2);clf
-us(iout) = utot(:,2);
-h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+subplot(2,1,1)
+us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
+us(iout) = uscat;
+h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
 hold on
-scatter(src.r(1,2),src.r(2,2),400,'r.')
 plot(chnkrs,'k.','markersize',15)
 c = colorbar;
+c.Label.String = '$\Im v_\xi$';
+c.Label.Interpreter = 'latex';
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
@@ -167,8 +198,25 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'clamp_sol.pdf','resolution',200)
 
+subplot(2,1,2)
+h = pcolor(X,Y, reshape((abs(us)),size(X))); h.EdgeColor = 'None';
+hold on
+plot(chnkrs,'k.','markersize',15)
+c = colorbar;
+hold off
+axis equal
+xlim([min(X(:)),max(X(:))])
+ylim([min(Y(:)),max(Y(:))])
+xlabel('$x_1$','Interpreter','latex')
+ylabel('$x_2$','Interpreter','latex')
+c.Label.String = '$|v_\xi|$';
+c.Label.Interpreter = 'latex';
+set(gca,'FontSize',18)
+set(gca,'TickLabelInterpreter','latex');
+set(c,'TickLabelInterpreter','latex');
+
+exportgraphics(gcf,'clamped_mode.pdf','resolution',200)
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A

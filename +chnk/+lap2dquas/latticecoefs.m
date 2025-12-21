@@ -22,8 +22,9 @@ for i = 1:nkappa
     sn(i,:) = -sn(i,:) + polylog(n,exp(1i*kappa(i)*d)) + (-1).^-n.*polylog(n,exp(-1i*kappa(i)*d));
     sn(i,:) = sn(i,:)./n./d.^n;
 end
-s0 = quasi_dual_sum(0,d/2,0,kappa,d)- chnk.lap2dquas.green([0;0],[0;d/2],kappa,d,0,sn,l,1);
 sn = sn / 2 / pi ;
+s0 = quasi_dual_sum(0,d/2,0,kappa,d)- chnk.lap2dquas.green([0;0],[0;d/2],kappa,d,0,sn,l,1);
+
 
 
 

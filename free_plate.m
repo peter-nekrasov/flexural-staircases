@@ -1,11 +1,11 @@
-zk = 1.2;
+zk = 2;
 % zk = 0.4;
-d = 1.;
+d = 1.2;
 % d = 2*pi;
 nu = 0.3;
 
 % kappa = pi/d;
-kappa = 0.5;
+% kappa = 0.5;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);
@@ -14,9 +14,9 @@ yy = xx;
 targ = []; targ.r = [X(:).'; Y(:).'];
 
 
-if false
+if true
     cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-    % cparams = []; cparams.ta = 0; cparams.tb = d;
+    cparams = []; cparams.ta = 0; cparams.tb = d;
     nch = 20/2; A = 0.2;
     chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
     chnkr = reverse(chnkr);
@@ -24,10 +24,10 @@ if false
     iout = targ.r(2,:) > wtarg(2,:);
     src = []; src.r = [0;-2]; src.n = [1;0];
     coefs = 1;
-    % src = []; src.r = [[-0.2;-2],[0.2;-2]]; src.n = [[1;0],[1;0]];
-    % coefs = [1;-1];
+    src = []; src.r = [[-0.2;-2],[0.2;-2]]; src.n = [[1;0],[1;0]];
+    coefs = [1;-1];
     % src = []; src.r = [0;2]; src.n = [1;0];
-    
+
 else
     chnkr = chunkerfunc(@(t) starfish(t,3,0.1),struct('eps',1e-10,'maxchunklen',0.4)); chnkr = 0.25*chnkr;
     chnkr = chnkr*1.3;
@@ -66,8 +66,6 @@ sn_l = -sn_l + polylog(ns,exp(1i*kappa*d)) + (-1).^-ns.*polylog(ns,exp(-1i*kappa
 sn_l = sn_l./ns./d.^ns;
 sn_l = sn_l / 2 / pi ;
 s0_l = quasi_dual_sum(0,d/2,0,kappa,d).'- chnk.lap2dquas.green([0;0],[0;d/2],kappa,d,0,sn_l,l,1);
-
-
 
 %%
 

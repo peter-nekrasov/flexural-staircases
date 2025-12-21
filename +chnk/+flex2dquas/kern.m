@@ -362,16 +362,16 @@ case {'free_plate'}
           fourth(:, :, 4).*(tauytarg.*tauytarg.*nxtarg.*tauy + 2*tauxtarg.*tauytarg.*nytarg.*tauy + tauytarg.*tauytarg.*nytarg.*taux) +...
          fourth(:, :, 5).*(tauytarg.*tauytarg.*nytarg.*tauy))) ;
     
-    submat = zeros(4*nkappa*nt,2*ns);
-    
-    submat(1:4:end,1:2:end) = K11;
-    submat(1:4:end,2:2:end) = K12;
-    
-    submat(2:4:end,1:2:end) = K21;
-    submat(2:4:end,2:2:end) = K22;
-    
-    submat(3:4:end,1:2:end) = K11H;
-    submat(4:4:end,1:2:end) = K21H;
+    % submat = zeros(4*nkappa*nt,2*ns);
+    % 
+    % submat(1:4:end,1:2:end) = K11;
+    % submat(1:4:end,2:2:end) = K12;
+    % 
+    % submat(2:4:end,1:2:end) = K21;
+    % submat(2:4:end,2:2:end) = K22;
+    % 
+    % submat(3:4:end,1:2:end) = K11H;
+    % submat(4:4:end,1:2:end) = K21H;
       
     submat = zeros(nkappa,4,nt,2*ns);
   submat(:,1,:,1:2:2*ns) = reshape(K11,nkappa,1,nt,[]);
@@ -379,7 +379,7 @@ case {'free_plate'}
   submat(:,2,:,1:2:2*ns) = reshape(K21,nkappa,1,nt,[]);
   submat(:,2,:,2:2:2*ns) = reshape(K22,nkappa,1,nt,[]);
   submat(:,3,:,1:2:2*ns) = reshape(K11H,nkappa,1,nt,[]);
-  submat(:,4,:,1:2:2*ns) = reshape(K22H,nkappa,1,nt,[]);
+  submat(:,4,:,1:2:2*ns) = reshape(K21H,nkappa,1,nt,[]);
   submat = reshape(submat, [],2*ns);
 
 % free plate kernels used for plotting 
