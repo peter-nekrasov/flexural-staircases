@@ -39,13 +39,15 @@ cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
 nch = 20; A = 1;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+chnkr = chunkerfunc(@(t) new_geom(t,d,A),cparams);
 chnkr = reverse(chnkr);
-wtarg = cos_func(targmod.r(1,:),d,A) ;
+% wtarg = cos_func(targmod.r(1,:),d,A) ;
+wtarg = new_geom(targmod.r(1,:),d,A) ;
 iout = targmod.r(2,:) > wtarg(2,:);
 
 src = []; src.r = [[0;-2],[d/2;2]];
-src = []; src.r = [[0;-2],[d/2;1]];
+% src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
 targout = []; targout.r = targmod.r(:,iout);

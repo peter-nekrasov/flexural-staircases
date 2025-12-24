@@ -1,6 +1,8 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 
+d = 1.2;
+nu = 0.3; 
 % zks = linspace(0.8,pi/d,40);
 kappas = linspace(1,pi/d,10);
 % kappas = 1;
@@ -20,8 +22,7 @@ tol = 1e-6;
 for i = 10:npoles
 kappa = kappas(i);
 nkappa = 1;
-d = 1.2;
-nu = 0.3; 
+
 
 kmin = 0.8; kmax = kappa-1e-2;
 poles{i} = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
