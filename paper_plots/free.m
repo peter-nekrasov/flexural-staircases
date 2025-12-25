@@ -1,6 +1,6 @@
 %%
 addpath(genpath('../../flexural-staircases'))
-% zk = 0.8;
+zk = 0.8;
 % zk = 0.3;
 d = 1.2;
 nu = 0.3; 
@@ -39,19 +39,37 @@ cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
 nch = 20; A = 1;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
-% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 chnkr = chunkerfunc(@(t) new_geom(t,d,A),cparams);
+% cparams.ta = -1; cparams.tb = 1; cparams.ifclosed = 0;
+% rs = [(-1:0.3:-0.1).' 0*(-1:0.3:-0.1).'+1; -0.1 0.8; -0.5 0.6; -2/3 -1/2; 0 -1; 2/3 -1/2; 2/3 1/2; 1/2 0.8; (0.5:0.1:1).' (0.5:0.1:1).'*0+1;].';
+% rs(1,:) = d/2*rs(1,:);
+% coefs = get_splines(rs);
+% chnkr = chunkerfunc(@(t) geom_eval(t,coefs),cparams);
 chnkr = reverse(chnkr);
 % wtarg = cos_func(targmod.r(1,:),d,A) ;
-wtarg = new_geom(targmod.r(1,:),d,A) ;
-iout = targmod.r(2,:) > wtarg(2,:);
+% wtarg = new_geom(targmod.r(1,:),d,A) ;
+% iout = targmod.r(2,:) > wtarg(2,:);
 
 src = []; src.r = [[0;-2],[d/2;2]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
+chnkrs = [];
+for i = -6:6
+    chnkrs = [chnkrs, chnkr + [i*d;0]];
+end
+chnkrs = merge(chnkrs);
+iout = ~chunkerinterior(chnkrs,targ);
+
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
+
+% figure(1); clf 
+% plot(chnkr)
+% hold on
+% quiver(chnkr)
+% drawnow
 
 %%
 
@@ -194,11 +212,7 @@ utot = uscat+uin;
 
 
 %%
-chnkrs = [];
-for i = -4:4
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
-end
-chnkrs = merge(chnkrs);
+
 
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
