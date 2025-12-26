@@ -1,12 +1,12 @@
 zk = 2;
-% zk = 0.4;
+zk = 0.2;
 d = 1.2;
 % d = 2*pi;
 nu = 0.3;
 
 % kappa = pi/d;
-% kappa = 0.5;
-kappa = pi/d;
+kappa = 0.5;
+% kappa = pi/d;
 
 nplot = 80;
 xx = linspace(-1.5*d, 1.5*d,nplot);

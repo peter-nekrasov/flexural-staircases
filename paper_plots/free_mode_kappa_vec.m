@@ -44,20 +44,57 @@ drawnow()
 end
 
 %%
-figure(2);clf
-hold on
-for ii = 1:i
-plot(zks(ii)+0*real(poles{ii}),real(poles{ii}),'o','linewidth',2)
+
+pole_vec = [];
+zks_vec = [];
+for i = 1:length(poles)
+    if ~isempty(poles{i})
+        pole_vec = [pole_vec, poles{i}(1)];
+        % zks_vec = [zks_vec, zks(i) + 0* poles{i}];
+    else
+        pole_vec = [pole_vec, NaN];
+        % zks_vec = [zks_vec, zks(i)];
+    end
+    zks_vec = [zks_vec, zks(i)];
 end
+
+figure(5);clf
+plot(zks_vec, real(pole_vec),'o-','linewidth',2)
+hold on
+% for ii = 1:length(zks)
+% plot(zks(ii)+0*real(poles{ii}),real(poles{ii}),'o','linewidth',2)
+% end
 plot(zks,zks,'-','linewidth',2)
 hold off
-xlabel('$\xi_k$','interpreter','latex')
-ylabel('$k$','interpreter','latex')
+xlabel('$k$','interpreter','latex')
+ylabel('$\xi_k$','interpreter','latex')
 set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
 % exportgraphics(gcf,'free_disp.pdf')
 
+
+figure(6);clf
+plot(zks_vec, log10(abs(real(pole_vec)-zks_vec)),'o-','linewidth',2)
+hold on
+% for ii = 1:length(zks)
+% plot(zks(ii)+0*real(poles{ii}),real(poles{ii})-zks(ii),'o','linewidth',2)
+% end
+hold off
+xlabel('$k$','interpreter','latex')
+ylabel('$\xi_k$','interpreter','latex')
+set(gca,'fontsize',18)
+set(gca,'ticklabelinterpreter','latex')
+drawnow()
+
+
+% figure(7);clf
+% plot(zks_vec(1:end-1), real(diff(pole_vec)),'o-','linewidth',2)
+% xlabel('$k$','interpreter','latex')
+% ylabel('$\xi_k$','interpreter','latex')
+% set(gca,'fontsize',18)
+% set(gca,'ticklabelinterpreter','latex')
+% drawnow()
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
