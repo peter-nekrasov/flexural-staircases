@@ -2,6 +2,8 @@
 addpath(genpath('../../flexural-staircases'))
 zk = 2;
 zk = 1.6;
+zk = 0.8;
+zk = 1.4;
 % zk = 1.62424242424242;
 % zk = 2.35;
 % zk = 2.29;
@@ -10,14 +12,14 @@ nu = 0.3;
 
 amp = -0.3;
 nleg = 32*2;
-nleg = 32;
+% nleg = 32;
 
 xs = cos((2*(1:nleg)-1)/2/nleg*pi);
 
 tmin = zk*1.1; tmax = pi/d;
 tmin = zk+0.1; tmax = pi/d;
-tmin = zk+1e-6; tmax = zk + 1e-4;
-tmiin = 1.6413728627665-1e-2; tmax = 1.6413728627665+1e-2;
+tmin = zk+1e-2; tmax = pi/d;
+% tmiin = 1.6413728627665-1e-2; tmax = 1.6413728627665+1e-2;
 % tmin = zk+1e-4; tmax = min(2*zk,pi/d);
 % tmin = zk+1e-4; tmax = 0.35;
 % tmin = 1.02; tmax = pi/sys.d;
@@ -38,7 +40,7 @@ targ = []; targ.r = [X(:).'; Y(:).'];
 
 targmod = [];
 targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-targmod = targ;
+% targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
 % cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
@@ -172,8 +174,8 @@ plot(kappa,abs(dets),'o-')
 kappa_rt = real(rts); nkappa = length(kappa_rt);
 % zk =  2.30387052135484;kappa_rt =pi/d; nkappa = 1;
 % zk = 2.31794871794872; kappa_rt = 2.49056010888529; nkappa = 1;
-zk =  1.62424242424242; kappa_rt = 1.6413728627665; nkappa = 1;
-zk = zks_vec(90); kappa_rt = pole_vec(90); nkappa = 1;
+% zk =  1.62424242424242; kappa_rt = 1.6413728627665; nkappa = 1;
+% zk = zks_vec(90); kappa_rt = pole_vec(90); nkappa = 1;
 if nkappa == 0, return, end
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);

@@ -1,7 +1,7 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
-% zk = 0.3;
+zk = 0.4;
 % d = 1.2;
 d = 2;
 nu = 0.3; 
@@ -23,7 +23,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-% nplot = 60;
+nplot = 60;
 xx = linspace(-6*d, 6*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,nplot/2) - 1.2;

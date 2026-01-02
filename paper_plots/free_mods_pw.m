@@ -1,10 +1,11 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 
-d = 1.2;
+% d = 1.2;
 nu = 0.3; 
 % zks = linspace(0.8,pi/d,40);
 kappas = linspace(1,pi/d,10);
+kappas = linspace(0.3+3e-2,pi/d,10);
 % kappas = 1;
 % poles = 0*kappas;
 npoles = length(kappas);
@@ -12,11 +13,11 @@ poles = cell(1,npoles);
 
 
 
-cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-cparams.maxchunklen = 2/(pi/d);cparams.ifclosed = 1;cparams.eps = 1e-6;
-nch = 20; A = 1;
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
-chnkr = reverse(chnkr);
+% cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+% cparams.maxchunklen = 2/(pi/d);cparams.ifclosed = 1;cparams.eps = 1e-6;
+% nch = 20; A = 1;
+% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+% chnkr = reverse(chnkr);
 
 tol = 1e-6;
 for i = 10:npoles
@@ -24,7 +25,7 @@ kappa = kappas(i);
 nkappa = 1;
 
 
-kmin = 0.8; kmax = kappa-1e-2;
+kmin = 0.3; kmax = kappa-3e-2;
 poles{i} = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
 
 figure(1);clf
@@ -179,20 +180,21 @@ for j = 1:nref
         for i = 1:ncheb
             sys = free_mat(chnkr,zks(i),nu,kappa,d);
             dets(i,1) = det(2*squeeze(sys(1,:,:)));
-            sys = free_mat(chnkr,zks_l(i),nu,kappa,d);
-            dets(i,2) = det(2*squeeze(sys(1,:,:)));
-            sys = free_mat(chnkr,zks_r(i),nu,kappa,d);
-            dets(i,3) = det(2*squeeze(sys(1,:,:)));
+            % sys = free_mat(chnkr,zks_l(i),nu,kappa,d);
+            % dets(i,2) = det(2*squeeze(sys(1,:,:)));
+            % sys = free_mat(chnkr,zks_r(i),nu,kappa,d);
+            % dets(i,3) = det(2*squeeze(sys(1,:,:)));
         end
 
         coefs = (T\(dets.*sqrt(kappa-zks.').^3));
         % ints = wts(:).'*coefs;
 
         % check that the means of each half are comparable
-        idone =  max(abs(coefs(1,1))) <  min(max(abs(coefs(1,2:3))))*2;
+        % idone =  max(abs(coefs(1,1))) <  min(max(abs(coefs(1,2:3))))*2;
         % idone = (abs(coefs(1,2)) <  2 *abs(coefs(1,3))) & (2*abs(coefs(1,2)) > abs(coefs(1,3))) ;
 
-        idone = idone & (max(abs(coefs(end-1:end,1)))/max(abs(coefs(1,1)))) < tol;
+        % idone = idone & (max(abs(coefs(end-1:end,1)))/max(abs(coefs(1,1)))) < tol;
+        idone = (max(abs(coefs(end-1:end,1)))/max(abs(coefs(1,1)))) < tol;
         % iref = abs(ints(1) - (ints(2)+ints(3))/2)/abs((ints(2)+ints(3))/2) < tol;
         % iref = abs(ints(1) - (ints(2)+ints(3))/2) < tol;
         if idone
