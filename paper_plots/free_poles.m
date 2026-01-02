@@ -2,10 +2,10 @@
 addpath(genpath('../../flexural-staircases'))
 zk = 2;
 zk = 1.6;
-zk = 1.62424242424242;
+% zk = 1.62424242424242;
 % zk = 2.35;
 % zk = 2.29;
-d = 1.2;
+% d = 1.2;
 nu = 0.3; 
 
 amp = -0.3;
@@ -41,14 +41,16 @@ targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
 targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
-cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
-nch = 20; A = 1;
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
-chnkr = reverse(chnkr);
+% cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+% cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
+% nch = 20; A = 1;
+% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+% chnkr = reverse(chnkr);
+% 
+% wtarg = cos_func(targmod.r(1,:),d,A) ;
+% iout = targmod.r(2,:) > wtarg(2,:);
+iout = chunkgraphinregion(cgrph,targmod)==1;
 
-wtarg = cos_func(targmod.r(1,:),d,A) ;
-iout = targmod.r(2,:) > wtarg(2,:);
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
 

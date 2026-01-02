@@ -2,7 +2,8 @@
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
 % zk = 0.3;
-d = 1.2;
+% d = 1.2;
+d = 2;
 nu = 0.3; 
 
 nnode = 62;
@@ -31,36 +32,37 @@ targ = []; targ.r = [X(:).'; Y(:).'];
 
 targmod = [];
 targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-targmod = targ;
+% targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 %%
 
-cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
-nch = 20; A = 1;
-% chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
-chnkr = chunkerfunc(@(t) new_geom(t,d,A),cparams);
+% cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+% cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
+% nch = 20; A = 1;
+% % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
+% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+% chnkr = chunkerfunc(@(t) new_geom(t,d,A),cparams);
 % cparams.ta = -1; cparams.tb = 1; cparams.ifclosed = 0;
 % rs = [(-1:0.3:-0.1).' 0*(-1:0.3:-0.1).'+1; -0.1 0.8; -0.5 0.6; -2/3 -1/2; 0 -1; 2/3 -1/2; 2/3 1/2; 1/2 0.8; (0.5:0.1:1).' (0.5:0.1:1).'*0+1;].';
 % rs(1,:) = d/2*rs(1,:);
 % coefs = get_splines(rs);
 % chnkr = chunkerfunc(@(t) geom_eval(t,coefs),cparams);
-chnkr = reverse(chnkr);
+% chnkr = reverse(chnkr);
 % wtarg = cos_func(targmod.r(1,:),d,A) ;
 % wtarg = new_geom(targmod.r(1,:),d,A) ;
 % iout = targmod.r(2,:) > wtarg(2,:);
 
-src = []; src.r = [[0;-2],[d/2;2]];
+src = []; src.r = [[0;-2],[d/2;3]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
 chnkrs = [];
-for i = -6:6
+for i = (-6:6)
     chnkrs = [chnkrs, chnkr + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
-iout = ~chunkerinterior(chnkrs,targ);
+% iout = ~chunkerinterior(chnkrs,targ);
+iout = chunkgraphinregion(cgrph,targmod)==1;
 
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
@@ -76,7 +78,7 @@ targout_0 = []; targout_0.r = targ.r(:,iout);
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 [s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
-%%
+%
 
 ising = 0;
 fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
