@@ -3,7 +3,7 @@ addpath(genpath('../../flexural-staircases'))
 zk = 2;
 zk = 1.6;
 zk = 0.8;
-zk = 1.4;
+% zk = 1.2;
 % zk = 1.62424242424242;
 % zk = 2.35;
 % zk = 2.29;

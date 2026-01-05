@@ -3,7 +3,9 @@ addpath(genpath('../../flexural-staircases'))
 
 % zks = linspace(0.8,pi/d,40);
 zks = linspace(0.8,2.4,40);
-zks = linspace(0.3,pi/d,51); zks = zks(1:end-1);
+zks = linspace(0.3,pi/d,16); zks = zks(1:end-1);
+% zks = zks(3);
+% zks = 0.8;
 % zks = linspace(1,2,10);
 % kappas = 1;
 % poles = 0*kappas;
@@ -20,12 +22,13 @@ poles = cell(1,npoles);
 
 tol = 1e-6;
 for i = 1:npoles
+    i
 zk = zks(i);
 nkappa = 1;
-d = 1.2;
+% d = 1.2;
 nu = 0.3; 
 
-kmin = zk+3e-2; kmax = pi/d;
+kmin = zk+1e-3; kmax = pi/d;
 poles{i} = free_mode(chnkr,nu,zk,kmin,kmax,d,tol);
 
 figure(1);clf
@@ -59,6 +62,7 @@ for i = 1:length(poles)
     zks_vec = [zks_vec, zks(i)];
 end
 
+%%
 figure(5);clf
 plot(zks_vec, real(pole_vec),'o-','linewidth',2)
 hold on
@@ -198,8 +202,9 @@ T = cos((0:(ncheb-1)).' .*acos(xcheb(:).')).';
 
 pan_ref_new = [kmin;kmax];
 pans = [];
+modes = [];
 
-nref = 10;
+nref = 13;
 % tic;
 for j = 1:nref
     pan_ref = pan_ref_new;
@@ -241,6 +246,25 @@ for j = 1:nref
         if idone
             pans = [pans, pan_ref(:,k)];
             ipan_rm = [ipan_rm, k];
+
+            c_cheb = T\(dets(:,1).*sqrt(kappa.'-zk).^3);
+            cs = c_cheb/c_cheb(end);
+            
+            B = .5*ones(ncheb-1,2);
+            A = spdiags(B,[-1,1],ncheb-1,ncheb-1);
+            A(1,2) = 1/sqrt(2);A(2,1) = 1/sqrt(2);
+            en = zeros(1,ncheb-1); en(end)=1;
+            cs(1) = sqrt(2)*cs(1);
+            
+            B = A - .5*cs(1:ncheb-1)*en;
+            
+            
+            rts = eig(B);
+            
+            rts = rts(abs(rts)<1);
+            rts = (rts(abs(imag(rts))<1e-3));
+            
+            modes = [modes,diff(pan_ref(:,k))*(rts+1)/2+pan_ref(1,k)];
         else
             a = pan_ref(1,k); b = pan_ref(2,k);
             pan_ref_new(:,k) = [a;pan_ctr];
@@ -252,12 +276,12 @@ for j = 1:nref
     % toc;
 end
 pans = [pans,pan_ref];
-modes = [];
+
 % toc;
 
 % tic;
-for k = 1:size(pans,2)
-    kappa = diff(pans(:,k))*(xcheb+1)/2+pans(1,k);
+for k = 1:size(pan_ref,2)
+    kappa = diff(pan_ref(:,k))*(xcheb+1)/2+pan_ref(1,k);
     
     dets = zeros(ncheb,1);
     sys = free_mat(chnkr,zk,nu,kappa,d);
@@ -280,9 +304,9 @@ for k = 1:size(pans,2)
     rts = eig(B);
     
     rts = rts(abs(rts)<1);
-    rts = real(rts(abs(imag(rts))<1e-4));
+    rts = real(rts(abs(imag(rts))<1e-3));
     
-    modes = [modes,diff(pans(:,k))*(rts+1)/2+pans(1,k)];
+    modes = [modes,diff(pan_ref(:,k))*(rts+1)/2+pan_ref(1,k)];
 end
 % toc;
 

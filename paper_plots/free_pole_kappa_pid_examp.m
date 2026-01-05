@@ -1,9 +1,8 @@
-% load('free_disp.mat')
-% load('free_disp2.mat')
-load('square_poles1.mat')
+zks = [0.642695074438943, 1.011460303036229, 1.367985530622488,  1.515168322469637];
+
 nplot = 200;
 % nplot = 60;
-xx = linspace(-6*d, 6*d,nplot);
+xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 4*d,nplot/2) - 1.2;
 [X,Y] = meshgrid(xx,yy);
@@ -22,61 +21,13 @@ targout_0 = []; targout_0.r = targ.r(:,iout);
 
 
 %%
-pole_vec = [];
-zks_vec = [];
-for i = 1:length(poles)
-    if ~isempty(poles{i})
-        pole_vec = [pole_vec, poles{i}(1)];
-        % zks_vec = [zks_vec, zks(i) + 0* poles{i}];
-    else
-        pole_vec = [pole_vec, NaN];
-        % zks_vec = [zks_vec, zks(i)];
-    end
-    zks_vec = [zks_vec, zks(i)];
-end
-
-inan = find(isnan(pole_vec));
-
-ibdry = zeros(2,length(inan)+1);
-ibdry(:,1) = [1; inan(1) - 1];
-for i = 2:length(inan)
-    ibdry(:,i) = [inan(i-1) + 1; inan(i)-1];
-end
-ibdry(:,end) = [inan(end)+1; length(pole_vec)];
-
-ibdry(:,ibdry(1,:)>ibdry(2,:)) = [];
-
-% iexamp = round(mean(ibdry,1));
-iexamp = ibdry(2,:) - 2;
-% % iexamp = [iexamp([1,3]),89,90];
-% iexamp = [iexamp([1,3,4,5])];
-
-% iexamp = 1:length(pole_vec);
-% iexamp = iexamp(~isnan(pole_vec));
-
-figure(5);clf
-plot(zks_vec, real(pole_vec),'o-','linewidth',2)
-hold on
-% for ii = 1:length(zks)
-% plot(zks(ii)+0*real(poles{ii}),real(poles{ii}),'o','linewidth',2)
-% end
-plot(zks,zks,'-','linewidth',2)
-hold off
-xlabel('$k$','interpreter','latex')
-ylabel('$\xi_k$','interpreter','latex')
-set(gca,'fontsize',18)
-set(gca,'ticklabelinterpreter','latex')
-drawnow()
-% exportgraphics(gcf,'free_disp.pdf')
-
-%%
 figure(10);clf; t = tiledlayout('flow'); t.TileSpacing = 'tight';
 figure(11);clf; t1 = tiledlayout('flow'); t1.TileSpacing = 'tight';
 
 
-for j = 1:length(iexamp)
+for j = 1:length(zks)
 
-zk = zks_vec(iexamp(j)); kappa_rt = pole_vec(iexamp(j)); nkappa = 1;
+zk = real(zks(j)); kappa_rt = kappas(end); nkappa = 1;
 if nkappa == 0, return, end
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
@@ -193,7 +144,7 @@ us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = uscat;
 h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
-plot(chnkrs,'k.','markersize',15)
+plot(chnkrs,'k.','markersize',10)
 c = colorbar;
 c.Label.String = '$\Im v_\xi$';
 c.Label.Interpreter = 'latex';
@@ -208,7 +159,7 @@ set(c,'TickLabelInterpreter','latex');
 figure(11);nexttile()
 h = pcolor(X,Y, reshape((abs(us)),size(X))); h.EdgeColor = 'None';
 hold on
-plot(chnkrs,'k.','markersize',15)
+plot(chnkrs,'k.','markersize',10)
 c = colorbar;
 hold off
 axis equal

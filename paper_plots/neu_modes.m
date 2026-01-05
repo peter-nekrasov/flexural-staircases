@@ -5,7 +5,7 @@ addpath(genpath('../../flexural-staircases'))
 nu = 0.3; 
 % zks = linspace(0.8,pi/d,40);
 kappas = linspace(1,pi/d,10);
-kappas = linspace(0.3+1e-2,pi/d,30);
+kappas = linspace(0.3+1e-2,pi/d,40);
 % kappas = 1;
 % poles = 0*kappas;
 npoles = length(kappas);
@@ -26,8 +26,8 @@ kappa = kappas(i);
 nkappa = 1;
 
 
-kmin = 0.3; kmax = kappa-1e-2;
-poles{i} = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
+kmin = 0.3; kmax = kappa-.1e-3;
+poles{i} = neu_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
 
 figure(1);clf
 hold on
@@ -41,6 +41,7 @@ ylabel('$k$','interpreter','latex')
 set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
+
 
 end
 
@@ -68,85 +69,31 @@ d = [ones(length(t),1), -omega*A*sin(omega*t(:))].';
 d2 = [zeros(length(t),1), -omega^2*A*cos(omega*t(:))].';
 end
 
-function sys = free_mat(chnkr,zk,nu,kappa,d)
-nkappa = length(kappa);
-
-l=2; N = 40; a = 15; M = 1e4;
-sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
-[s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
-%%
-
-ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
-double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
-hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
-opts = [];
-opts.sing = 'smooth';
-
-opts2 = [];
-opts2.sing = 'smooth';
-
-% building system matrix
+function sys = neu_mat(chnkr,zk,nu,kappa,d)
+% nkappa = length(kappa);
+% 
+% l=2; N = 40; a = 15; M = 1e4;
+% sn = chnk.helm2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
+% %%
+% quas_param = [];
+% quas_param.kappa = kappa;
+% quas_param.d = d;
+% quas_param.l = l;
+% quas_param.sn = sn;
 
 start = tic;
-sysmat1 = chunkermat(chnkr,fkern1, opts);
-D = chunkermat(chnkr, double, opts);
-H = chunkermat(chnkr, hilbert, opts2);     
+% fkern1 =  @(s,t) chnk.helm2dquas.kern(zk, s, t, 'sprime',quas_param);
+fkern1 = kernel('hq','sp',zk,kappa,d);
+sysmat1 = chunkermat(chnkr,fkern1);
 
-sysmat1 = reshape(sysmat1,nkappa,4*chnkr.npt,2*chnkr.npt);
-D = reshape(D,nkappa,chnkr.npt,chnkr.npt);
-H = reshape(H,nkappa,chnkr.npt,chnkr.npt);
-
-
-fkern1 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate',nu);
-double = @(s,t) chnk.lap2d.kern(s,t,'d');
-hilbert = @(s,t) chnk.lap2d.kern(s,t,'hilb');
-
-opts = [];
-opts.sing = 'log';
-
-opts2 = [];
-opts2.sing = 'pv';
-
-% building system matrix
-
-sysmat1_0 = chunkermat(chnkr,fkern1, opts);
-D_0 = chunkermat(chnkr, double, opts);
-H_0 = chunkermat(chnkr, hilbert, opts2); 
-
-sysmat1_0 = reshape(sysmat1_0,1,4*chnkr.npt,2*chnkr.npt);
-D_0 = reshape(D_0,1,chnkr.npt,chnkr.npt);
-H_0 = reshape(H_0,1,chnkr.npt,chnkr.npt);
-
-sysmat1 = sysmat1 + sysmat1_0; D = D + D_0; H = H + H_0;
-
-D = permute(D,[2,3,1]);
-H = permute(H,[2,3,1]);
-s11b = permute(sysmat1(:,3:4:end,1:2:end),[2,3,1]);
-s21b = permute(sysmat1(:,4:4:end,1:2:end),[2,3,1]);
-
-k11tmp = permute(pagemtimes(s11b,H) -  2*((1+nu)/2)^2*pagemtimes(D,D),[3,1,2]);
-k21tmp = permute(pagemtimes(s21b,H),[3,1,2]);
-
-sysmat = zeros(nkappa,2*chnkr.npt,2*chnkr.npt);
-sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + k11tmp;
-sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + k21tmp;
-% sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + sysmat1(:,3:4:end,1:2:end)*H  - 2*((1+nu)/2)^2*D*D;
-% sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + sysmat1(:,4:4:end,1:2:end)*H;
-sysmat(:,1:2:end,2:2:end) = sysmat1(:,1:4:end,2:2:end) + sysmat1(:,3:4:end,2:2:end);
-sysmat(:,2:2:end,2:2:end) = sysmat1(:,2:4:end,2:2:end) + sysmat1(:,4:4:end,2:2:end);
-
-D = [-1/2 + (1/8)*(1+nu).^2, 0; 0, 1/2];  % jump matrix 
-D = reshape(kron(eye(chnkr.npt), D),1,2*chnkr.npt,2*chnkr.npt);
-
-sys =  D + sysmat;
+sys = -0.5*eye(size(sysmat1)) + sysmat1;
 t1 = toc(start);
 fprintf('%5.2e s : time to assemble matrix\n',t1)
 
 
 end
 
-function modes = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol)
+function modes = neu_mode(chnkr,nu,kappa,kmin,kmax,d,tol)
 
 
 ncheb = 16;
@@ -179,15 +126,15 @@ for j = 1:nref
         dets = zeros(ncheb,3);
 
         for i = 1:ncheb
-            sys = free_mat(chnkr,zks(i),nu,kappa,d);
-            dets(i,1) = det(2*squeeze(sys(1,:,:)));
+            sys = neu_mat(chnkr,zks(i),nu,kappa,d);
+            dets(i,1) = det(2*(sys));
             % sys = free_mat(chnkr,zks_l(i),nu,kappa,d);
             % dets(i,2) = det(2*squeeze(sys(1,:,:)));
             % sys = free_mat(chnkr,zks_r(i),nu,kappa,d);
             % dets(i,3) = det(2*squeeze(sys(1,:,:)));
         end
 
-        coefs = (T\(dets.*sqrt(kappa-zks.').^3));
+        coefs = (T\(dets.*sqrt(kappa-zks.').^0));
         % ints = wts(:).'*coefs;
 
         % check that the means of each half are comparable
@@ -202,7 +149,7 @@ for j = 1:nref
             pans = [pans, pan_ref(:,k)];
             ipan_rm = [ipan_rm, k];
 
-            c_cheb = T\(dets(:,1).*sqrt(kappa-zks.').^3);
+            c_cheb = T\(dets(:,1).*sqrt(kappa-zks.').^0);
             cs = c_cheb/c_cheb(end);
             
             B = .5*ones(ncheb-1,2);
@@ -219,7 +166,7 @@ for j = 1:nref
             rts = rts(abs(rts)<1);
             rts = real(rts(abs(imag(rts))<1e-3));
             
-            modes = [modes,diff(pan_ref(:,k))*(rts+1)/2+pan_ref(1,k)];
+            modes = [modes,diff(pan_ref(:,k))*(rts(:).'+1)/2+pan_ref(1,k)];
         else
             a = pan_ref(1,k); b = pan_ref(2,k);
             pan_ref_new(:,k) = [a;pan_ctr];
@@ -240,8 +187,8 @@ for k = 1:size(pan_ref,2)
     
     dets = zeros(ncheb,1);
     for i = 1:ncheb
-        sys = free_mat(chnkr,zks(i),nu,kappa,d);
-        dets(i) = det(2*squeeze(sys(1,:,:)));
+        sys = neu_mat(chnkr,zks(i),nu,kappa,d);
+        dets(i) = det(2*squeeze(sys(:,:)));
     end
 
     c_cheb = T\(dets.*sqrt(kappa-zks.').^3);
@@ -261,7 +208,7 @@ for k = 1:size(pan_ref,2)
     rts = rts(abs(rts)<1);
     rts = real(rts(abs(imag(rts))<1e-3));
     
-    modes = [modes,diff(pan_ref(:,k))*(rts+1)/2+pan_ref(1,k)];
+    modes = [modes,diff(pan_ref(:,k))*(rts(:).'+1)/2+pan_ref(1,k)];
 end
 % toc;
 
