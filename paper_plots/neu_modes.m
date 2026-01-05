@@ -60,6 +60,33 @@ set(gca,'ticklabelinterpreter','latex')
 drawnow()
 % exportgraphics(gcf,'free_disp.pdf')
 
+%%
+kappa_vec = cell(3,1);
+pole_vec = cell(3,1);
+for i = 1:npoles
+    for k = 1:size(pole_vec,1)
+        if numel(poles{i}) > k-1
+            kappa_vec{k} = [kappa_vec{k},kappas(i)];
+            pole_vec{k} = [pole_vec{k},poles{i}(k)];
+        end
+    end
+end
+
+
+figure(2);clf
+
+hold on
+for ii = 1:size(pole_vec,1)
+plot(kappa_vec{ii},real(pole_vec{ii}),'.-','linewidth',2,'MarkerSize',15)
+end
+plot(kappas,kappas,'k-','linewidth',1.5)
+hold off
+xlabel('$\xi_k$','interpreter','latex')
+ylabel('$k$','interpreter','latex')
+set(gca,'fontsize',18)
+set(gca,'ticklabelinterpreter','latex')
+drawnow()
+
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A

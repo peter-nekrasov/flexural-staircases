@@ -27,7 +27,7 @@ figure(11);clf; t1 = tiledlayout('flow'); t1.TileSpacing = 'tight';
 
 for j = 1:length(zks)
 
-zk = real(zks); kappa_rt = kappas(end); nkappa = 1;
+zk = real(zks(j)); kappa_rt = kappas(end); nkappa = 1;
 if nkappa == 0, return, end
 start = tic;
 % fkern1 =  @(s,t) chnk.helm2dquas.kern(zk, s, t, 'sprime',quas_param);
