@@ -1,7 +1,8 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 2;
-d = 1.2;
+
+zk = 1.2;
 
 nnode = 61;
 ts = linspace(-pi/d,pi/d,nnode);
@@ -20,9 +21,9 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-xx = linspace(-3*d, 3*d,nplot);
+xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
-yy = linspace(0, 6*d,nplot) - 1.2;
+yy = linspace(0, 6*d,3*nplot/3) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
@@ -32,20 +33,21 @@ targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 %%
 
-cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
-nch = 20; A = 1;
-% chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
-chnkr = reverse(chnkr);
-wtarg = cos_func(targmod.r(1,:),d,A) ;
-iout = targmod.r(2,:) > wtarg(2,:);
+src = []; src.r = [[0;-2],[d/2;1.5]];
+% src = []; src.r = [[0;-2],[d/2;1]];
+% src.r = [0;-2];
 
-src = []; src.r = [[0;-2],[d/2;2]];
-src = []; src.r = [[0;-2],[d/2;1]];
+chnkrs = [];
+for i = (-6:6)
+    chnkrs = [chnkrs, chnkr + [i*d;0]];
+end
+chnkrs = merge(chnkrs);
+% iout = ~chunkerinterior(chnkrs,targ);
+iout = chunkgraphinregion(cgrph,targmod)==1;
 
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
+
 
 %%
 

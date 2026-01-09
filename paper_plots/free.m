@@ -1,7 +1,7 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
-% zk = 0.4;
+zk = 1.2;
 % d = 1.2;
 d = 2;
 nu = 0.3; 
@@ -23,10 +23,10 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-nplot = 60;
-xx = linspace(-6*d, 6*d,nplot);
+% nplot = 120;
+xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
-yy = linspace(0, 6*d,nplot/2) - 1.2;
+yy = linspace(0, 6*d,3*nplot/4) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
@@ -52,7 +52,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % wtarg = new_geom(targmod.r(1,:),d,A) ;
 % iout = targmod.r(2,:) > wtarg(2,:);
 
-src = []; src.r = [[0;-2],[d/2;3]];
+src = []; src.r = [[0;-2],[d/2;1.5]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
@@ -232,7 +232,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'free_acc.pdf','resolution',200)
+exportgraphics(gcf,'free_acc.pdf','resolution',200)
 % %%
 figure(2);clf
 us(iout) = utot(:,2);
@@ -248,7 +248,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'free_sol.pdf','resolution',200)
+exportgraphics(gcf,'free_sol.pdf','resolution',200)
 
 
 function [r,d,d2] = cos_func(t,d,A)

@@ -81,6 +81,9 @@ plot(chnkr,'x')
 hold off
 axis equal
 
+figure(7);clf
+plot_regions(cgrph)
+
 % function [r,d,d2] = FP2(ts, cs)
 function [r] = FP2(ts, cs)
 ncheb = (size(cs,1))/2;
