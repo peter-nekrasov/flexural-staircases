@@ -1,7 +1,7 @@
 %%
 addpath(genpath('../../flexural-staircases'))
-zk = 1;
-d = 1.2;
+zk = 1.3;
+% d = 1.2;
 nu = 0.3; 
 
 amp = -0.3;
@@ -11,7 +11,7 @@ nleg = 64;
 xs = cos((2*(1:nleg)-1)/2/nleg*pi);
 
 tmin = zk+0.1; tmax = pi/d;
-% tmin = 1.02; tmax = pi/sys.d;
+tmin = zk+1e-3; tmax = zk+0.1;
 % tmin = 1.001; tmax = 1.01;
 tr = (tmax-tmin)*(xs+1)/2+tmin;
 kappa = tr;
@@ -19,7 +19,7 @@ kappa = tr;
 nkappa = length(kappa);
 
 
-nplot = 240;
+nplot = 120;
 xx = linspace(-6*d, 6*d,nplot);
 yy = xx;
 yy = linspace(0, 4*d,nplot/2) - 1.2;
@@ -28,17 +28,17 @@ targ = []; targ.r = [X(:).'; Y(:).'];
 
 targmod = [];
 targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-targmod = targ;
+% targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
-cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
-nch = 20; A = 1;
-chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
-chnkr = reverse(chnkr);
+% cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+% cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;cparams.eps = 1e-6;
+% nch = 20; A = 1;
+% chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+% chnkr = reverse(chnkr);
 
-wtarg = cos_func(targmod.r(1,:),d,A) ;
-iout = targmod.r(2,:) > wtarg(2,:);
+% wtarg = cos_func(targmod.r(1,:),d,A) ;
+iout = chunkgraphinregion(cgrph,targmod)==1;
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
 
@@ -106,7 +106,7 @@ set(gca,'fontsize',16)
 
 %%
 
-
+if isempty(rts); return, end
 kappa_rt = real(rts); nkappa = 1;
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
@@ -142,7 +142,7 @@ sol = dens;
 
 
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,[],[],l,0);
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa_rt,d,sn,[],[],l,0);
 ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate_eval');
 
 wts = repmat(chnkr.wts(:).',2,1);
@@ -151,7 +151,7 @@ nt = size(targout.r,2);
 start1 = tic;
 nbatch = ceil(2e5/chnkr.npt);
 ntout = size(targout.r,2);
-
+uscat = zeros(ntout,1);
 nshiftout = nshift(iout);
 for i = 1:ceil(ntout/nbatch)
     iuse = ((i-1)*nbatch+1):min(ntout,i*nbatch);
@@ -163,7 +163,7 @@ for i = 1:ceil(ntout/nbatch)
     
     gevalmat = reshape(gevalmat,nkappa, nti, []);
     gevalmat = gevalmat + reshape(gevalmat_0,1,nti, []);
-    gevalmat = exp(1i*kappa(:).*nshiftout(iuse)*d) .* gevalmat;
+    gevalmat = exp(1i*kappa_rt(:).*nshiftout(iuse)*d) .* gevalmat;
     % gevalmat = exp(1i*kappa(:).*nshift(iout)*d) .* gevalmat;
     
     gevalmat = reshape(permute(gevalmat, [2,1,3]), nti,[]);

@@ -21,6 +21,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
+nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -153,11 +154,12 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'clamp_acc.pdf','resolution',200)
+% exportgraphics(gcf,'clamp_acc.pdf','resolution',200)
 % %%
 figure(2);clf
 us(iout) = utot(:,2);
-h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+% h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,2),src.r(2,2),400,'r.')
 plot(chnkrs,'k.','markersize',15)
@@ -169,7 +171,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'clamp_sol.pdf','resolution',200)
+% exportgraphics(gcf,'clamp_sol.pdf','resolution',200)
 
 
 function [r,d,d2] = cos_func(t,d,A)

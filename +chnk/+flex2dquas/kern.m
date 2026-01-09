@@ -436,6 +436,208 @@ case {'free_plate_eval_ff'}
    submat(:,2:3:end) = K1H;
    submat(:,3:3:end) = K2;
 
+
+% boundary conditions applied to a point source
+case {'supported_plate_bcs'}
+   targnorm = targinfo.n;
+   targtang = targinfo.d;
+
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
+    dx = repmat(reshape(targtang(1,:),1,nt,1),nkappa,1,ns);
+    dx = reshape(dx,[],ns);
+    dy = repmat(reshape(targtang(2,:),1,nt,1),nkappa,1,ns);
+    dy = reshape(dy,[],ns);
+    % dx = targinfo.d(1,:).';
+    % dy = targinfo.d(2,:).';
+    ds = sqrt(dx.*dx+dy.*dy);
+    tauxtarg = (dx./ds);                                                                       % normalization
+    tauytarg = (dy./ds);
+
+    nu = varargin{1};
+    
+    [val, ~, hess] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+    
+    firstbc = 1/(2*zk^2).*val ;
+    
+    secondbc = 1/(2*zk^2).*(hess(:, :, 1).*(nxtarg.*nxtarg) + hess(:, :, 2).*(2*nxtarg.*nytarg) + hess(:, :, 3).*(nytarg.*nytarg))+...
+               nu/(2*zk^2).*(hess(:, :, 1).*(tauxtarg.*tauxtarg) + hess(:, :, 2).*(2*tauxtarg.*tauytarg) + hess(:, :, 3).*(tauytarg.*tauytarg));
+    
+    submat = zeros(nkappa,2,nt,ns);
+    submat(:,1,:,:) = reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,:) = reshape(secondbc,nkappa,1,nt,[]);
+    submat = reshape(submat, [],ns);
+
+% kernels for the supported plate integral equation that have to be 
+% discretized using log quadrature
+case {'supported_plate'}
+    srcnorm = srcinfo.n;
+    srctang = srcinfo.d;
+    srcd2 = srcinfo.d2;
+    targnorm = targinfo.n;
+    targtang = targinfo.d;
+    coefs = varargin{1};
+    nu = coefs(1);
+    
+    nx = repmat(srcnorm(1,:),nt,1);
+    ny = repmat(srcnorm(2,:),nt,1);
+    
+    nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
+    nxtarg = reshape(nxtarg,[],ns);
+    nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
+    nytarg = reshape(nytarg,[],ns);
+        
+    dx = repmat(srctang(1,:),nt,1);
+    dy = repmat(srctang(2,:),nt,1);
+    
+    ds = sqrt(dx.*dx+dy.*dy);
+    
+    taux = dx./ds;
+    tauy = dy./ds;
+    
+    dx1 = repmat((targtang(1,:)).',1,ns);
+    dy1 = repmat((targtang(2,:)).',1,ns);
+    
+    ds1 = sqrt(dx1.*dx1+dy1.*dy1); 
+    
+    tauxtarg = dx1./ds1;
+    tauytarg = dy1./ds1;
+    
+    dx1 = repmat(srctang(1,:),nt,1);
+    dy1 = repmat(srctang(2,:),nt,1);
+    
+    d2x1 = repmat(srcd2(1,:),nt,1);
+    d2y1 = repmat(srcd2(2,:),nt,1);
+    
+    denom = sqrt(dx1.^2+dy1.^2).^3;
+    numer = dx1.*d2y1-d2x1.*dy1;
+    
+    kappa = numer./denom;   
+    
+    kp = repmat(srcinfo.data(1,:),nt,1);
+    
+    a1 = 2-nu;
+    a2 = (-1+nu)*(7+nu)/(3 - nu);
+    a3 = (1-nu)*(3+nu)/(1+nu);
+    
+    [~, grad, hess, third, fourth,fifth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+    
+    K11 = -1/(2*zk^2)*(third(:,:,1).*nx.^3 + 3*third(:,:,2).*nx.^2.*ny + 3*third(:,:,3).*nx.*ny.^2 + third(:,:,4).*ny.^3) + ...
+         -a1/(2*zk^2)*(third(:,:,1).*nx.*taux.^2 + third(:,:,2).*(ny.*taux.^2 + 2*nx.*taux.*tauy) + third(:,:,3).*(nx.*tauy.^2 + 2*ny.*taux.*tauy) + third(:,:,4).*ny.*tauy.^2) + ...
+         a2*kappa./(2*zk^2).*(hess(:,:,1).*nx.^2 + 2*hess(:,:,2).*nx.*ny + hess(:,:,3).*ny.^2) + ...
+         -a3*kp./(2*zk^2).*(grad(:,:,1).*taux + grad(:,:,2).*tauy);
+    
+    K12 = -1/(2*zk^2).*(grad(:, :, 1).*nx + grad(:, :, 2).*ny);
+           
+    K22 = -1/(2*zk^2).*(third(:,:,1).*(nx.*nxtarg.^2) + third(:,:,2).*(2*nx.*nxtarg.*nytarg + ny.*nxtarg.^2) + ...
+         + third(:,:,3).*(nx.*nytarg.^2 + 2*ny.*nxtarg.*nytarg) + third(:,:,4).*(ny.*nytarg.^2))+...
+         -nu./(2*zk^2).*(third(:,:,1).*(nx.*tauxtarg.^2) + third(:,:,2).*(2*nx.*tauxtarg.*tauytarg + ny.*tauxtarg.^2) + ...
+         + third(:,:,3).*(nx.*tauytarg.^2 + 2*ny.*tauxtarg.*tauytarg) + third(:,:,4).*(ny.*tauytarg.^2)); 
+    
+    
+    K21 = -1./(2*zk^2).*(fifth(:,:,1).*nxtarg.^2.*nx.^3 + ... % K21 with the biharmonic Green's function subtracted off (biharmonic part handled in a separate function)
+          fifth(:,:,2).*(2*nxtarg.*nytarg.*nx.^3+3*nxtarg.^2.*nx.^2.*ny) + ...
+          fifth(:,:,3).*(nytarg.^2.*nx.^3 + 6*nxtarg.*nytarg.*nx.^2.*ny+3.*nxtarg.^2.*nx.*ny.^2) + ...
+          fifth(:,:,4).*(3*nytarg.^2.*nx.^2.*ny+6.*nxtarg.*nytarg.*nx.*ny.^2+nxtarg.^2.*ny.^3)+ ...
+          fifth(:,:,5).*(nytarg.*ny.^2.*(3*nytarg.*nx+2*nxtarg.*ny))+ ...
+          fifth(:,:,6).*nytarg.^2.*ny.^3) + ... % G_{nx nx ny ny ny}
+         -nu./(2*zk^2).*(fifth(:,:,1).*tauxtarg.^2.*nx.^3 + ...
+          fifth(:,:,2).*(2*tauxtarg.*tauytarg.*nx.^3+3*tauxtarg.^2.*nx.^2.*ny) + ...
+          fifth(:,:,3).*(tauytarg.^2.*nx.^3 + 6*tauxtarg.*tauytarg.*nx.^2.*ny+3.*tauxtarg.^2.*nx.*ny.^2) + ...
+          fifth(:,:,4).*(3*tauytarg.^2.*nx.^2.*ny+6.*tauxtarg.*tauytarg.*nx.*ny.^2+tauxtarg.^2.*ny.^3)+ ...
+          fifth(:,:,5).*(tauytarg.*ny.^2.*(3*tauytarg.*nx+2*tauxtarg.*ny))+ ...
+          fifth(:,:,6).*tauytarg.^2.*ny.^3) + ... % nu*G_{taux taux ny ny ny}
+        -a1./(2*zk^2).*(fifth(:,:,1).*nxtarg.^2.*nx.*taux.^2 + ...
+          fifth(:,:,2).*(2.*nx.*nxtarg.^2.*taux.*tauy + 2.*nx.*nxtarg.*nytarg.*taux.^2 + nxtarg.^2.*ny.*taux.^2) + ...
+          fifth(:,:,3).*(nx.*nxtarg.^2.*tauy.^2 + 4*nx.*nxtarg.*nytarg.*taux.*tauy + 2*nxtarg.^2.*ny.*taux.*tauy + nx.*nytarg.^2.*taux.^2 + 2*nxtarg.*ny.*nytarg.*taux.^2) + ...
+          fifth(:,:,4).*(2*nx.*nxtarg.*nytarg.*tauy.^2 + nxtarg.^2.*ny.*tauy.^2 + 2*nx.*nytarg.^2.*taux.*tauy + 4*nxtarg.*ny.*nytarg.*taux.*tauy + ny.*nytarg.^2.*taux.^2) + ...
+          fifth(:,:,5).*(nytarg.*tauy.*(2*ny.*nytarg.*taux + 2*nxtarg.*ny.*tauy + nx.*nytarg.*tauy)) + ...
+          fifth(:,:,6).*ny.*nytarg.^2.*tauy.^2) + ...  % G_{nx nx ny tauy tauy}
+        -nu*a1./(2*zk^2).*(fifth(:,:,1).*tauxtarg.^2.*nx.*taux.^2 + ...
+          fifth(:,:,2).*(ny.*taux.^2.*tauxtarg.^2 + 2.*nx.*taux.*tauxtarg.^2.*tauy +2.*nx.*taux.^2.*tauxtarg.*tauytarg) + ...
+          fifth(:,:,3).*(nx.*tauxtarg.^2.*tauy.^2 + 4*nx.*tauxtarg.*tauytarg.*taux.*tauy + 2*tauxtarg.^2.*ny.*taux.*tauy + nx.*tauytarg.^2.*taux.^2 + 2*tauxtarg.*ny.*tauytarg.*taux.^2) + ...
+          fifth(:,:,4).*(2*nx.*tauxtarg.*tauytarg.*tauy.^2 + tauxtarg.^2.*ny.*tauy.^2 + 2*nx.*tauytarg.^2.*taux.*tauy + 4*tauxtarg.*ny.*tauytarg.*taux.*tauy + ny.*tauytarg.^2.*taux.^2) + ...
+          fifth(:,:,5).*(tauytarg.*tauy.*(2*ny.*tauytarg.*taux + 2*tauxtarg.*ny.*tauy + nx.*tauytarg.*tauy)) + ...
+          fifth(:,:,6).*ny.*tauytarg.^2.*tauy.^2) + ... % nu*G_{taux taux ny tauy tauy}
+         a2.*kappa./(2*zk^2).*(fourth(:, :, 1).*(nxtarg.*nxtarg.*nx.*nx) + ...
+          fourth(:, :, 2).*(2*nx.^2.*nxtarg.*nytarg + 2*nx.*nxtarg.^2.*ny) + ...
+          fourth(:, :, 3).*(nxtarg.^2.*ny.^2 + 4*nx.*nxtarg.*ny.*nytarg + nx.^2.*nytarg.^2) +...
+          fourth(:, :, 4).*(2*ny.*nytarg.*(nxtarg.*ny + nx.*nytarg))+...
+          fourth(:, :, 5).*(nytarg.*nytarg.*ny.*ny)) + ... % kappa*G_{nx nx ny ny}
+         nu*a2.*kappa./(2*zk^2).*(fourth(:, :, 1).*(tauxtarg.*tauxtarg.*nx.*nx) + ...
+          fourth(:, :, 2).*(2*nx.^2.*tauxtarg.*tauytarg + 2*nx.*tauxtarg.^2.*ny) + ...
+          fourth(:, :, 3).*(tauxtarg.^2.*ny.^2 + 4*nx.*tauxtarg.*ny.*tauytarg + nx.^2.*tauytarg.^2) +...
+          fourth(:, :, 4).*(2*ny.*tauytarg.*(tauxtarg.*ny + nx.*tauytarg))+...
+          fourth(:, :, 5).*(tauytarg.*tauytarg.*ny.*ny)) + ... % kappa*nu*G_{nx nx ny ny}
+        -a3.*kp./(2*zk^2).*(third(:, :, 1).*(nxtarg.*nxtarg.*taux) + third(:, :, 2).*(nxtarg.*nxtarg.*tauy+ 2*nxtarg.*nytarg.*taux) +...
+            third(:, :, 3).*(2*nxtarg.*nytarg.*tauy +nytarg.*nytarg.*taux) +...
+            third(:, :, 4).*(nytarg.*nytarg.*tauy)) + ... % kp*G_{nx nx tauy}
+         -nu*a3.*kp./(2*zk^2).*(third(:, :, 1).*(tauxtarg.*tauxtarg.*taux) + third(:, :, 2).*(tauxtarg.*tauxtarg.*tauy + 2*tauxtarg.*tauytarg.*taux) +...
+            third(:, :, 3).*(2*tauxtarg.*tauytarg.*tauy + tauytarg.*tauytarg.*taux) +...
+            third(:, :, 4).*(tauytarg.*tauytarg.*tauy)) ;  % kp*nu*G_{taux taux tauy}
+    
+    submat = zeros(nkappa,2,nt,2*ns);
+    submat(:,1,:,1:2:2*ns) = reshape(K11,nkappa,1,nt,[]);
+    submat(:,1,:,2:2:2*ns) = reshape(K12,nkappa,1,nt,[]);
+    submat(:,2,:,1:2:2*ns) = reshape(K21,nkappa,1,nt,[]);
+    submat(:,2,:,2:2:2*ns) = reshape(K22,nkappa,1,nt,[]);
+    submat = reshape(submat, [],2*ns);
+
+
+    
+% supported plate kernels for plotting
+case {'supported_plate_eval'}
+    srcnorm = srcinfo.n;
+    srctang = srcinfo.d;
+    srcd2 = srcinfo.d2;
+    coefs = varargin{1};
+    nu = coefs(1);
+    
+    nx = repmat(srcnorm(1,:),nkappa*nt,1);
+    ny = repmat(srcnorm(2,:),nkappa*nt,1);
+
+   dx = repmat(srctang(1,:),nkappa*nt,1);
+   dy = repmat(srctang(2,:),nkappa*nt,1);
+    
+    ds = sqrt(dx.*dx+dy.*dy);
+    
+    taux = dx./ds;
+    tauy = dy./ds;
+    
+    dx1 = repmat(srctang(1,:),nkappa*nt,1);
+    dy1 = repmat(srctang(2,:),nkappa*nt,1);
+    
+    d2x1 = repmat(srcd2(1,:),nkappa*nt,1);
+    d2y1 = repmat(srcd2(2,:),nkappa*nt,1);
+    
+    denom = sqrt(dx1.^2+dy1.^2).^3;
+    numer = dx1.*d2y1-d2x1.*dy1;
+    
+    kappa = numer./denom; 
+    
+    kp = repmat(srcinfo.data(1,:),nkappa*nt,1);
+    
+    a1 = 2-nu;
+    a2 = (-1+nu)*(7+nu)/(3 - nu);
+    a3 = (1-nu)*(3+nu)/(1+nu);
+    
+    [~, grad, hess, third] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+    
+    K1 = -1/(2*zk^2)*(third(:,:,1).*nx.^3 + 3*third(:,:,2).*nx.^2.*ny + 3*third(:,:,3).*nx.*ny.^2 + third(:,:,4).*ny.^3) + ...
+         -a1/(2*zk^2)*(third(:,:,1).*nx.*taux.^2 + third(:,:,2).*(ny.*taux.^2 + 2*nx.*taux.*tauy) + third(:,:,3).*(nx.*tauy.^2 + 2*ny.*taux.*tauy) + third(:,:,4).*ny.*tauy.^2) + ...
+         a2*kappa./(2*zk^2).*(hess(:,:,1).*nx.^2 + 2*hess(:,:,2).*nx.*ny + hess(:,:,3).*ny.^2) + ...
+         -a3*kp./(2*zk^2).*(grad(:,:,1).*taux + grad(:,:,2).*tauy);
+
+    K2 = -1/(2*zk^2).*(grad(:,:,1).*nx + grad(:,:,2).*ny);
+
+    submat = zeros(nkappa*nt,2*ns);
+
+    submat(:,1:2:end) = K1;
+    submat(:,2:2:end) = K2;
+
+
 end
 
 if ising == 1
