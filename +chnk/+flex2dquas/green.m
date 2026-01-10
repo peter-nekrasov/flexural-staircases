@@ -242,11 +242,11 @@ if ~isempty(rxclose)
 
     N = size(sn,2)-1;
     ns = (0:N);
-    ns_use = (0:N+4);
-    Js = zeros(length(rclose),N+5);
-    Is = zeros(length(rclose),N+5);
+    ns_use = (0:N+6);
+    Js = zeros(length(rclose),N+7);
+    Is = zeros(length(rclose),N+7);
 
-    if length(rclose) < N+5
+    if length(rclose) < N+7
         for i = 1:length(rclose)
         Js(i,:) = besselj(ns_use,zk*rclose(i));
         Is(i,:) = besselj(ns_use,1i*zk*rclose(i));
@@ -262,19 +262,19 @@ if ~isempty(rxclose)
     eipn = reshape(eip.^ns,1,[], N+1);
     cs = (eipn+1./eipn)/2;
     
-    Js = reshape(Js,1,[],N+5);
-    Is = reshape(Is,1,[],N+5);
+    Js = reshape(Js,1,[],N+7);
+    Is = reshape(Is,1,[],N+7);
     snj = reshape(sn(:,:,1),nkappa, 1, N+1);
     sni = reshape(sn(:,:,2),nkappa, 1, N+1);
     
-    tmpj = reshape(Js(:,:,2:end-4).*cs(:,:,2:end),[],N);
-    tmpi = reshape(-Is(:,:,2:end-4).*cs(:,:,2:end),[],N);    
+    tmpj = reshape(Js(:,:,2:end-6).*cs(:,:,2:end),[],N);
+    tmpi = reshape(-Is(:,:,2:end-6).*cs(:,:,2:end),[],N);    
     val_far = 0.25*1i*(Js(:,:,1).*snj(:,:,1)-Is(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
-        DJs = cat(3,-Js(:,:,2),.5*(Js(:,:,1:end-5)-Js(:,:,3:end-3)))*zk;
-        DIs = cat(3,-Is(:,:,2),.5*(Is(:,:,1:end-5)-Is(:,:,3:end-3)))*1i*zk;
+        DJs = cat(3,-Js(:,:,2),.5*(Js(:,:,1:end-7)-Js(:,:,3:end-5)))*zk;
+        DIs = cat(3,-Is(:,:,2),.5*(Is(:,:,1:end-7)-Is(:,:,3:end-5)))*1i*zk;
         ss = (eipn-1./eipn)/2i;
         
         tmpj = reshape(DJs(:,:,2:end).*cs(:,:,2:end),[],N);
@@ -282,8 +282,8 @@ if ~isempty(rxclose)
 
         grad_far_p = 0.25*1i*(DJs(:,:,1).*snj(:,:,1)-DIs(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
         
-        tmpj = reshape((Js(:,:,2:end-4)).*ss(:,:,2:end),[],N)./rclose;
-        tmpi = reshape((-Is(:,:,2:end-4)).*ss(:,:,2:end),[],N)./rclose;
+        tmpj = reshape((Js(:,:,2:end-6)).*ss(:,:,2:end),[],N)./rclose;
+        tmpi = reshape((-Is(:,:,2:end-6)).*ss(:,:,2:end),[],N)./rclose;
 
         grad_far_t = (0.5*1i*((-reshape((1:N),1,[]).*sni(:,2:end))*tmpi.'))+(0.5*1i*((-reshape((1:N),1,[]).*snj(:,2:end))*tmpj.'));
         
