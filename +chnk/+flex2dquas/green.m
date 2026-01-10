@@ -491,11 +491,11 @@ if ~isempty(rxclose)
     end
     if nargout > 5
 
-        fifth(:,iclose,:) = fifth_near + fifth_far;
+        fifth(:,iclose,:) = fifth_near;% + fifth_far;
     end
     if nargout > 6
 
-        sixth(:,iclose,:) = sixth_near + sixth_far;
+        sixth(:,iclose,:) = sixth_near;% + sixth_far;
     end
 end
 

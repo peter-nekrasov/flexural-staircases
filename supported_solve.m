@@ -8,6 +8,17 @@ nu = 0.3;
 kappa = 0.5;
 % kappa = pi/d;
 ws = 1;
+
+nnode = 62;
+ts = linspace(-pi/d,pi/d,nnode);
+ts = ts(2:end);
+ws = 1/(nnode-1);
+
+amp = -0.3;
+kappa = ts + amp*1i*sin(ts*d);
+xip = 1 + amp*1i*d*cos(ts*d);
+ws = ws*xip;
+
 nkappa = length(kappa);
 
 nplot = 80;
@@ -25,10 +36,7 @@ if false
     chnkr = reverse(chnkr);
     wtarg = cos_func(targ.r(1,:),d,A) ;
     iout = targ.r(2,:) > wtarg(2,:);
-    src = []; src.r = [0;-2]; src.n = [1;0];
-    coefs = 1;
     src = []; src.r = [[-0.2;-2],[0.2;-2]]; src.n = [[1;0],[1;0]];
-    coefs = [1;-1];
     % src = []; src.r = [0;2]; src.n = [1;0];
     chnkr = makedatarows(chnkr,2);
 
@@ -38,11 +46,14 @@ else
     targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
     iout = ~chunkerinterior(chnkr,targmod);
     src = []; src.r = [[-0.01;-0.01], [0.05;0.02]]; %src.n = [1;0];
-    coefs = [1;0];
     chnkr = makedatarows(chnkr,2);
 end
 
-targout = []; targout.r = targ.r(:,iout);
+targmod = [];
+targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
+targout = []; targout.r = targmod.r(:,iout);
+targout_0 = []; targout_0.r = targ.r(:,iout);
 
 
 l=2; N = 40; a = 15; M = 1e4;
@@ -52,8 +63,8 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 ising = 0;
 fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu);
 
-kappa = signed_curvature(chnkr);
-kp = arclengthder(chnkr,kappa);
+curv = signed_curvature(chnkr);
+kp = arclengthder(chnkr,curv);
 kpp = arclengthder(chnkr,kp);
 
 % supported plate kernels expect (d/ds) kappa in the first data row
@@ -82,7 +93,7 @@ M2 = chunkermat(chnkr,fkern2_0, opts2);
 
 c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
 
-M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + M2 + c0.*kappa(:).^2.*eye(chnkr.npt);
+M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + M2 + c0.*curv(:).^2.*eye(chnkr.npt);
 M = M - 0.5*eye(2*chnkr.npt);
 
 sys_0 = reshape(M,1,2*chnkr.npt,2*chnkr.npt);
@@ -99,7 +110,7 @@ fprintf('%5.2e s : time to assemble matrix\n',t1)
 %%
 
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,[],[],l,ising);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',kappa,d,sn,[],[],l,ising);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',kappa,d,sn,[],[],l,ising,nu);
 
 skern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 's');
 
@@ -120,8 +131,8 @@ end
 
 uscat = 0*uin;
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa,d,sn,[],[],l,0);
-ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_eval');
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa,d,sn,[],[],l,0,nu);
+ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_eval',nu);
 
 wts = repmat(chnkr.wts(:).',2,1);
 nt = size(targout.r,2);
