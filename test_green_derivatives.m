@@ -85,7 +85,7 @@ assert(err19 < 1e-7)
 assert(err20 < 1e-7)
 assert(err21 < 1e-8)
 assert(err22 < 1e-3)
-assert(err23 < 5e-4)
+assert(err23 < 1e-5)
 assert(err24 < 1e-5)
 assert(err25 < 5e-5)
 assert(err26 < 1e-6)
@@ -112,19 +112,19 @@ targ2 = [X(:).';Y(:).'];
 
 % [val2,grad2,hess2,third2,fourth2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
 % [val2] = chnk.helm2dquas.green(src2,targ2,zk,xi,d,sn(:,:,1),l,ising);
-[val2,grad2,hess2,third2,fourth2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
+[val2,grad2,hess2,third2,fourth2,fifth2,sixth2] = chnk.flex2dquas.green(src2,targ2,zk,xi,d,sn,l,ising);
 % [val2,grad2,hess2] = chnk.helm2dquas.green(src2,targ2,zk,xi,d,sn(:,:,1),l,ising);
 
 
 [val_true, grad_true, hess_true, third_true, fourth_true] =  quasi_flex_dual_sum(X(:).',Y(:).',zk,xi,d);
 
 
-
+%%
 
 norm(val2(:) -val_true(:))
 
 figure(1);clf
-h = pcolor(X,Y,reshape(real(val2(:,:,1)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y,reshape(real(sixth2(:,:,1)),size(X))); h.EdgeColor = 'None';
 
 %% derivatives of hkdiffgreen
 
