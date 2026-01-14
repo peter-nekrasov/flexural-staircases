@@ -11,7 +11,8 @@ nleg = 64;
 xs = cos((2*(1:nleg)-1)/2/nleg*pi);
 
 tmin = zk+0.1; tmax = pi/d;
-tmin = zk+1e-2; tmax = zk+0.2;
+tmin = zk+1e-3; tmax = zk+0.1;
+% tmin = 1.001; tmax = 1.01;
 tr = (tmax-tmin)*(xs+1)/2+tmin;
 kappa = tr;
 
@@ -20,6 +21,7 @@ nkappa = length(kappa);
 
 nplot = 240;
 % nplot = 120;
+nplot = 120;
 xx = linspace(-6*d, 6*d,nplot);
 yy = xx;
 yy = linspace(0, 4*d,nplot/2) - 1.2;
@@ -36,6 +38,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % nch = 20; A = 1;
 % chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 % chnkr = reverse(chnkr);
+% wtarg = cos_func(targmod.r(1,:),d,A) ;
 iout = chunkgraphinregion(cgrph,targmod)==1;
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
@@ -104,7 +107,7 @@ set(gca,'fontsize',16)
 
 %%
 
-if isempty(rts), return, end
+if isempty(rts); return, end
 kappa_rt = real(rts); nkappa = 1;
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
