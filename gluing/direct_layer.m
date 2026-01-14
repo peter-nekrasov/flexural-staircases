@@ -1,5 +1,5 @@
 function submat = direct_layer(src,targ,zk)
-    [val,grad,hess,third] = chnk.flex2d.hkdiffgreen(zk,src,targ);  
+    [val,grad,hess,third] = chnk.flex2d.hkdiffgreen(zk,src.r(:,:),targ.r(:,:));  
 
     submat = zeros(size(targ.r(:,:),2),4*size(src.r(:,:),2));
     submat(:,1:4:end) = 1/(2*zk^2).*val;

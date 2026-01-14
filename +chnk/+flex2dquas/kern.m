@@ -883,6 +883,7 @@ case {'supported_plate_eval'}
     a3 = (1-nu)*(3+nu)/(1+nu);
     
     [~, grad, hess, third] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+    % [val,grad] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
     
     K1 = -1/(2*zk^2)*(third(:,:,1).*nx.^3 + 3*third(:,:,2).*nx.^2.*ny + 3*third(:,:,3).*nx.*ny.^2 + third(:,:,4).*ny.^3) + ...
          -a1/(2*zk^2)*(third(:,:,1).*nx.*taux.^2 + third(:,:,2).*(ny.*taux.^2 + 2*nx.*taux.*tauy) + third(:,:,3).*(nx.*tauy.^2 + 2*ny.*taux.*tauy) + third(:,:,4).*ny.*tauy.^2) + ...

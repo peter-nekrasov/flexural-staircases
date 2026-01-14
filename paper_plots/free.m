@@ -23,7 +23,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-% nplot = 120;
+nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/4) - 1.2;
@@ -232,7 +232,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'free_acc.pdf','resolution',200)
+% exportgraphics(gcf,'free_acc.pdf','resolution',200)
 % %%
 figure(2);clf
 us(iout) = utot(:,2);
@@ -248,7 +248,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(gcf,'free_sol.pdf','resolution',200)
+% exportgraphics(gcf,'free_sol.pdf','resolution',200)
 
 
 function [r,d,d2] = cos_func(t,d,A)
