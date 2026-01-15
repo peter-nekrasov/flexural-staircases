@@ -7,7 +7,7 @@ nu = 0.3;
 kappas = linspace(1,pi/d,10);
 kappas = linspace(0.3+1e-2,pi/d,40);
 kappas = linspace(0.3+1e-2,pi/d,80);
-kappas = kappas(3:end);
+kappas = kappas(6:end);
 % kappas = 1;
 % poles = 0*kappas;
 npoles = length(kappas);
@@ -44,6 +44,7 @@ set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
 
+save('free_square_modes.mat')
 end
 
 %%
@@ -62,7 +63,6 @@ drawnow()
 % exportgraphics(gcf,'free_disp.pdf')
 
 
-save('free_square_modes.mat')
 
 
 function [r,d,d2] = cos_func(t,d,A)
