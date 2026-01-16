@@ -8,11 +8,11 @@ ts = ts(2:end);
 ws = 1/(nnode-1);
 
 xi = ts - 0.3i*sin(ts*d);
-xi = xi(57);
+xi = 0.7; % xi(57);
 
 h = 0.0000001;
 
-l=2; N = 40; a = 15; M = 1e4;
+l=2; N = 80; a = 15; M = 1e4;
 ns = (0:N).';
 sn1 = chnk.helm2dquas.latticecoefs(ns,zk,d,xi,(exp(1i*xi*d)),a,M,l+1);
 sn2 = chnk.helm2dquas.latticecoefs(ns,1i*zk,d,xi,(exp(1i*xi*d)),a,M,l+1);
@@ -22,7 +22,7 @@ ising = 1;
 d1 = [-1/2 0 1/2]/h;
 
 src = []; src.r = [0.1;0.2]; 
-targ = []; targ.r = [0.4;0.1] + h*[-1:1;0*(-1:1)];
+targ = []; targ.r = [0.2;0.1] + h*[-1:1;0*(-1:1)];
 [val,grad,hess,third,fourth,fifth,sixth] = chnk.flex2dquas.green(src.r,targ.r,zk,xi,d,sn,l,ising);
 
 err1 = abs(d1*val - grad(2,1,1))  / abs(grad(2,1,1)) % G_{x}
@@ -33,34 +33,34 @@ err5 = abs(d1*fourth(:,:,1) - fifth(2,1,1))  / abs(fifth(2,1,1)) % G_{xxxxx}
 err6 = abs(d1*fifth(:,:,1) - sixth(2,1,1))  / abs(sixth(2,1,1)) % G_{xxxxxx}
 
 
-targ = []; targ.r = [0.4;0.1] + h*[0*(-1:1);(-1:1)];
+targ = []; targ.r = [0.2;0.1] + h*[0*(-1:1);(-1:1)];
 [val,grad,hess,third,fourth,fifth,sixth] = chnk.flex2dquas.green(src.r,targ.r,zk,xi,d,sn,l,ising);
 
-err7 = abs(d1*val - grad(2,1,2))  / abs(grad(2,1,1)) % G_{y}
-err8 = abs(d1*grad(:,:,1) - hess(2,1,2))  / abs(hess(2,1,2)) % G_{xy}
-err9 = abs(d1*grad(:,:,2) - hess(2,1,3))  / abs(hess(2,1,3)) % G_{yy}
+err7 = abs(d1*val - grad(2,1,2)) % / abs(grad(2,1,1)) % G_{y}
+err8 = abs(d1*grad(:,:,1) - hess(2,1,2)) % / abs(hess(2,1,2)) % G_{xy}
+err9 = abs(d1*grad(:,:,2) - hess(2,1,3)) % / abs(hess(2,1,3)) % G_{yy}
 
-err10 = abs(d1*hess(:,:,1) - third(2,1,2))  / abs(third(2,1,2)) % G_{xxy}
-err11 = abs(d1*hess(:,:,2) - third(2,1,3))  / abs(third(2,1,3)) % G_{xyy}
-err12 = abs(d1*hess(:,:,3) - third(2,1,4))  / abs(third(2,1,4)) % G_{yyy}
+err10 = abs(d1*hess(:,:,1) - third(2,1,2))  % / abs(third(2,1,2)) % G_{xxy}
+err11 = abs(d1*hess(:,:,2) - third(2,1,3))  % / abs(third(2,1,3)) % G_{xyy}
+err12 = abs(d1*hess(:,:,3) - third(2,1,4))  % / abs(third(2,1,4)) % G_{yyy}
 
-err13 = abs(d1*third(:,:,1) - fourth(2,1,2))  / abs(fourth(2,1,2)) % G_{xxxy}
-err14 = abs(d1*third(:,:,2) - fourth(2,1,3))  / abs(fourth(2,1,3)) % G_{xxyy}
-err15 = abs(d1*third(:,:,3) - fourth(2,1,4))  / abs(fourth(2,1,4)) % G_{xyyy}
-err16 = abs(d1*third(:,:,4) - fourth(2,1,5))  / abs(fourth(2,1,5)) % G_{yyyy}
+err13 = abs(d1*third(:,:,1) - fourth(2,1,2))  % / abs(fourth(2,1,2)) % G_{xxxy}
+err14 = abs(d1*third(:,:,2) - fourth(2,1,3))  % / abs(fourth(2,1,3)) % G_{xxyy}
+err15 = abs(d1*third(:,:,3) - fourth(2,1,4))  % / abs(fourth(2,1,4)) % G_{xyyy}
+err16 = abs(d1*third(:,:,4) - fourth(2,1,5))  % / abs(fourth(2,1,5)) % G_{yyyy}
 
-err17 = abs(d1*fourth(:,:,1) - fifth(2,1,2))  / abs(fifth(2,1,2)) % G_{xxxxy}
-err18 = abs(d1*fourth(:,:,2) - fifth(2,1,3))  / abs(fifth(2,1,3)) % G_{xxxyy}
-err19 = abs(d1*fourth(:,:,3) - fifth(2,1,4))  / abs(fifth(2,1,4)) % G_{xxyyy}
-err20 = abs(d1*fourth(:,:,4) - fifth(2,1,5))  / abs(fifth(2,1,5)) % G_{xyyyy}
-err21 = abs(d1*fourth(:,:,5) - fifth(2,1,6))  / abs(fifth(2,1,5)) % G_{yyyyy}
+err17 = abs(d1*fourth(:,:,1) - fifth(2,1,2))  % / abs(fifth(2,1,2)) % G_{xxxxy}
+err18 = abs(d1*fourth(:,:,2) - fifth(2,1,3))  % / abs(fifth(2,1,3)) % G_{xxxyy}
+err19 = abs(d1*fourth(:,:,3) - fifth(2,1,4))  % / abs(fifth(2,1,4)) % G_{xxyyy}
+err20 = abs(d1*fourth(:,:,4) - fifth(2,1,5))  % / abs(fifth(2,1,5)) % G_{xyyyy}
+err21 = abs(d1*fourth(:,:,5) - fifth(2,1,6))  % / abs(fifth(2,1,5)) % G_{yyyyy}
 
-err22 = abs(d1*fifth(:,:,1) - sixth(2,1,2))  / abs(sixth(2,1,2)) % G_{xxxxxy}
-err23 = abs(d1*fifth(:,:,2) - sixth(2,1,3))  / abs(sixth(2,1,3)) % G_{xxxxyy}
-err24 = abs(d1*fifth(:,:,3) - sixth(2,1,4))  / abs(sixth(2,1,4)) % G_{xxxyyy}
-err25 = abs(d1*fifth(:,:,4) - sixth(2,1,5))  / abs(sixth(2,1,5)) % G_{xxyyyy}
-err26 = abs(d1*fifth(:,:,5) - sixth(2,1,6))  / abs(sixth(2,1,6)) % G_{xyyyyy}
-err27 = abs(d1*fifth(:,:,6) - sixth(2,1,7))  / abs(sixth(2,1,7)) % G_{yyyyyy}
+err22 = abs(d1*fifth(:,:,1) - sixth(2,1,2))   / abs(sixth(2,1,2)) % G_{xxxxxy}
+err23 = abs(d1*fifth(:,:,2) - sixth(2,1,3))   / abs(sixth(2,1,3)) % G_{xxxxyy}
+err24 = abs(d1*fifth(:,:,3) - sixth(2,1,4))   / abs(sixth(2,1,4)) % G_{xxxyyy}
+err25 = abs(d1*fifth(:,:,4) - sixth(2,1,5))   / abs(sixth(2,1,5)) % G_{xxyyyy}
+err26 = abs(d1*fifth(:,:,5) - sixth(2,1,6))   / abs(sixth(2,1,6)) % G_{xyyyyy}
+err27 = abs(d1*fifth(:,:,6) - sixth(2,1,7))   / abs(sixth(2,1,7)) % G_{yyyyyy}
 
 
 assert(err1 < 1e-8)
