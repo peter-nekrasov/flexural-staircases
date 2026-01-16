@@ -3,8 +3,8 @@ addpath(genpath('../../flexural-staircases'))
 
 % zks = linspace(0.8,pi/d,40);
 zks = linspace(0.8,2.4,40);
-zks = linspace(0.3,pi/d,16); zks = zks(1:end-1);
-zks = linspace(0.3,pi/d,41); zks = zks(2:end);
+zks = linspace(0.3,pi/d,41); zks = zks(1:end-1);
+%zks = linspace(0.3,pi/d,41); zks = zks(2:end);
 % zks = zks(3);
 % zks = 0.8;
 % zks = linspace(1,2,10);
@@ -14,6 +14,7 @@ npoles = length(zks);
 poles = cell(1,npoles);
 
 
+zks
 
 % cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 % cparams.maxchunklen = 2/(pi/d);cparams.ifclosed = 1;cparams.eps = 1e-6;
@@ -29,8 +30,8 @@ nkappa = 1;
 % d = 1.2;
 nu = 0.3; 
 
-% kmin = zk+1e-3; kmax = pi/d;
-kmin = 0.3; kmax = zk-1e-3;
+kmin = zk+1e-3; kmax = pi/d;
+% kmin = 0.3; kmax = zk-1e-3;
 poles{i} = free_mode(chnkr,nu,zk,kmin,kmax,d,tol);
 
 figure(1);clf
@@ -111,78 +112,29 @@ d = [ones(length(t),1), -omega*A*sin(omega*t(:))].';
 d2 = [zeros(length(t),1), -omega^2*A*cos(omega*t(:))].';
 end
 
-function sys = free_mat(chnkr,zk,nu,kappa,d)
+function sys = clamp_mat(chnkr,zk,nu,kappa,d)
 nkappa = length(kappa);
+
 
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
-[s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
+
 %%
+ising = 1;
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising);
 
-ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
-double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
-hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
-opts = [];
-opts.sing = 'smooth';
-
-opts2 = [];
-opts2.sing = 'smooth';
-
-% building system matrix
-
-start = tic;
-sysmat1 = chunkermat(chnkr,fkern1, opts);
-D = chunkermat(chnkr, double, opts);
-H = chunkermat(chnkr, hilbert, opts2);     
-
-sysmat1 = reshape(sysmat1,nkappa,4*chnkr.npt,2*chnkr.npt);
-D = reshape(D,nkappa,chnkr.npt,chnkr.npt);
-H = reshape(H,nkappa,chnkr.npt,chnkr.npt);
-
-
-fkern1 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate',nu);
-double = @(s,t) chnk.lap2d.kern(s,t,'d');
-hilbert = @(s,t) chnk.lap2d.kern(s,t,'hilb');
+curv = signed_curvature(chnkr);
+curv = curv(:);
 
 opts = [];
 opts.sing = 'log';
 
-opts2 = [];
-opts2.sing = 'pv';
+start = tic;
+sys = chunkermat(chnkr,fkern, opts);
+sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
 
-% building system matrix
-
-sysmat1_0 = chunkermat(chnkr,fkern1, opts);
-D_0 = chunkermat(chnkr, double, opts);
-H_0 = chunkermat(chnkr, hilbert, opts2); 
-
-sysmat1_0 = reshape(sysmat1_0,1,4*chnkr.npt,2*chnkr.npt);
-D_0 = reshape(D_0,1,chnkr.npt,chnkr.npt);
-H_0 = reshape(H_0,1,chnkr.npt,chnkr.npt);
-
-sysmat1 = sysmat1 + sysmat1_0; D = D + D_0; H = H + H_0;
-
-D = permute(D,[2,3,1]);
-H = permute(H,[2,3,1]);
-s11b = permute(sysmat1(:,3:4:end,1:2:end),[2,3,1]);
-s21b = permute(sysmat1(:,4:4:end,1:2:end),[2,3,1]);
-
-k11tmp = permute(pagemtimes(s11b,H) -  2*((1+nu)/2)^2*pagemtimes(D,D),[3,1,2]);
-k21tmp = permute(pagemtimes(s21b,H),[3,1,2]);
-
-sysmat = zeros(nkappa,2*chnkr.npt,2*chnkr.npt);
-sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + k11tmp;
-sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + k21tmp;
-% sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + sysmat1(:,3:4:end,1:2:end)*H  - 2*((1+nu)/2)^2*D*D;
-% sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + sysmat1(:,4:4:end,1:2:end)*H;
-sysmat(:,1:2:end,2:2:end) = sysmat1(:,1:4:end,2:2:end) + sysmat1(:,3:4:end,2:2:end);
-sysmat(:,2:2:end,2:2:end) = sysmat1(:,2:4:end,2:2:end) + sysmat1(:,4:4:end,2:2:end);
-
-D = [-1/2 + (1/8)*(1+nu).^2, 0; 0, 1/2];  % jump matrix 
-D = reshape(kron(eye(chnkr.npt), D),1,2*chnkr.npt,2*chnkr.npt);
-
-sys =  D + sysmat;
+sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
+sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
 t1 = toc(start);
 fprintf('%5.2e s : time to assemble matrix\n',t1)
 
@@ -221,7 +173,7 @@ for j = 1:nref
 
         dets = zeros(ncheb,3);
 
-        sys = free_mat(chnkr,zk,nu,kappa,d);
+        sys = clamp_mat(chnkr,zk,nu,kappa,d);
         for i = 1:ncheb
             dets(i,1) = det(2*squeeze(sys(i,:,:)));
         end
@@ -286,7 +238,7 @@ for k = 1:size(pan_ref,2)
     kappa = diff(pan_ref(:,k))*(xcheb+1)/2+pan_ref(1,k);
     
     dets = zeros(ncheb,1);
-    sys = free_mat(chnkr,zk,nu,kappa,d);
+    sys = clamp_mat(chnkr,zk,nu,kappa,d);
     for i = 1:ncheb
         dets(i) = det(2*squeeze(sys(i,:,:)));
     end

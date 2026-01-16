@@ -35,7 +35,7 @@ dens_comb = reshape(dens_comb,[],size(rhs,2));
 
 %%
 if itrdata == 0
-    u = zeros(size(targ.r,2), size(src.r,2));
+    u = zeros(size(targ.r(:,:),2), size(dens,2));
     
     ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
     ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate_eval',nu);
@@ -65,8 +65,8 @@ if itrdata == 0
     fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
 
     if ifree
-        u = u + ...
-            chunkerkerneval(chnkr_tr,@(s,t) direct_layer(s,t,zk),dens,targ);
+        evalmat = chunkerkernevalmat(chnkr_tr,@(s,t) direct_layer(s,t,zk),targ);
+        u = u + evalmat*dens;
     end
 else
     ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval_trx',kappa,d,sn,s0_l,sn_l,l,1,nu);
