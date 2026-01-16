@@ -31,8 +31,8 @@ src = []; src.r = [[0;-2], [0;2]]; %src.n = [1;0];
     
 targout = []; targout.r = targ.r(:,iout);
 %%
-[sys,sn,l,H,s0_l,sn_l] = free_mat(chnkr,zk,nu,kappa,d);
-utot = free_scatter(src,targout,chnkr,1,0,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l);
+[sys,sn,l] = clamped_mat(chnkr,zk,nu,kappa,d);
+utot = clamped_scatter(src,targout,chnkr,1,0,zk,nu,kappa,d,ws,sys,sn,l);
 
 
 
@@ -101,7 +101,7 @@ chnkr2 = chunkerfuncuni(f, nch, cparams);
 % end
 chnkr2 = [0,-1;1,0]*chnkr2;
 %%
-u_tr = free_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l);
+u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 %%
 % l=2; N = 40; a = 15; M = 1e4;
 % kap = pi/d;
@@ -124,12 +124,14 @@ plot(real(chnkr2.r(2,:)), real(u),'.')
 
 
 %%
+src.r = [1;0.];
+
 tic;
-u_tr = free_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l);
+u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 toc;
 h = 1e-3;
-u_tr_p = free_scatter(src,chnkr2+[h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l);
-u_tr_m = free_scatter(src,chnkr2+[-h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l);
+u_tr_p = clamped_scatter(src,chnkr2+[h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
+u_tr_m = clamped_scatter(src,chnkr2+[-h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 
 % src.r = [1;0];
 % u_tr = direct_rhs(src,chnkr2,zk);
@@ -142,3 +144,17 @@ a = (u_tr_p -  u_tr_m)/2/h;
 norm(a(1:4:end,:) - u_tr(2:4:end,:))
 norm(a(2:4:end,:) - u_tr(3:4:end,:))
 norm(a(3:4:end,:) - u_tr(4:4:end,:))
+
+
+i = 2;
+plot(real(chnkr2.r(2,:)), log10(abs(a(i:4:end,:) - u_tr(i+1:4:end,:))),'.')
+
+% b = abs(a(i:4:end,:) - u_tr(i+1:4:end,:));
+% c = b(abs(chnkr2.r(2,:))< 4).'
+
+b = (u_tr_p +  u_tr_m - 2*u_tr)/h^2;
+norm(b(2:4:end,:) - u_tr(4:4:end,:))
+i = 2;
+plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - u_tr(i+2:4:end,:))),'.')
+
+% plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - a(i+1:4:end,:))),'.')

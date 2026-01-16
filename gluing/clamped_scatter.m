@@ -22,7 +22,7 @@ sol = 0*rhs;
 for i = 1:nkappa
 sol(i:nkappa:end,:) = (squeeze(sys(i,:,:))\rhs(i:nkappa:end,:))*ws(i);
 end
-sol = reshape(sol,nkappa,[],size(sol,2));
+% sol = reshape(sol,nkappa,[],size(sol,2));
 
 %%
 
@@ -31,7 +31,7 @@ if itrdata == 0
     ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,[],[],l,0,nu);
     ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate_eval',nu);
     
-    wts = repmat(chnkr.wts(:).',3,1);
+    wts = repmat(chnkr.wts(:).',2,1);
     
     start1 = tic;
     nbatch = ceil(2e5/chnkr.npt);
@@ -60,7 +60,7 @@ if itrdata == 0
     end
 else
     ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval_trx',kappa,d,sn,[],[],l,1,nu);
-    wts = repmat(chnkr.wts(:).',3,1);
+    wts = repmat(chnkr.wts(:).',2,1);
 
     gevalmat = ikern(chnkr,targmod).* wts(:).';
     gevalmat = reshape(gevalmat,nkappa, 4,size(targmod.r,2), []);

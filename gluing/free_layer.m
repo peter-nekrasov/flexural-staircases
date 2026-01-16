@@ -3,7 +3,7 @@ nkappa = length(kappa);
 
 targmod = [];
 targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-% targmod = targ;
+targmod = targ;
 nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
 

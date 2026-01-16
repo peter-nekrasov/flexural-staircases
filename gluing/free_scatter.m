@@ -1,5 +1,5 @@
 function u = free_scatter(src,targ,chnkr,ifree,itrdata,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l)
-% itrdata = 0, get field, itrdata = 1, get field and first 3 x1 ders
+% itrdata = 0, get field, itrdata = 1, get field and first 3 x_1 ders
 nkappa = length(kappa);
 
 
