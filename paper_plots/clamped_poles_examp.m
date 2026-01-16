@@ -1,28 +1,13 @@
 %%
 addpath(genpath('../../flexural-staircases'))
-zk = 1.4;
+load('clamped_fake_poles1.mat')
 % d = 1.2;
 nu = 0.3; 
 
-amp = -0.3;
-nleg = 32;
-nleg = 64;
-
-xs = cos((2*(1:nleg)-1)/2/nleg*pi);
-
-tmin = zk+0.1; tmax = pi/d;
-tmin = zk+1e-3; tmax = zk+0.1;
-% tmin = 1.001; tmax = 1.01;
-tr = (tmax-tmin)*(xs+1)/2+tmin;
-kappa = tr;
-
-nkappa = length(kappa);
-
 
 nplot = 240;
-% nplot = 120;
 nplot = 120;
-xx = linspace(-6*d, 6*d,nplot);
+xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 4*d,nplot/2) - 1.2;
 [X,Y] = meshgrid(xx,yy);
@@ -38,77 +23,18 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % nch = 20; A = 1;
 % chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 % chnkr = reverse(chnkr);
-% wtarg = cos_func(targmod.r(1,:),d,A) ;
 iout = chunkgraphinregion(cgrph,targmod)==1;
 targout = []; targout.r = targmod.r(:,iout);
 targout_0 = []; targout_0.r = targ.r(:,iout);
 
 %%
-
-l=2; N = 40; a = 15; M = 1e4;
-sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
-
-%%
-ising = 1;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising);
-
-curv = signed_curvature(chnkr);
-curv = curv(:);
-
-opts = [];
-opts.sing = 'log';
-
-start = tic;
-sys = chunkermat(chnkr,fkern, opts);
-sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
-
-sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
-sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
-t1 = toc(start);
-fprintf('%5.2e s : time to assemble matrix\n',t1)
-
-dets = zeros(nkappa,1);
-
-for i = 1:nkappa
-    dets(i) = det(2*squeeze(sys(i,:,:)));
-end
-
-%%
-T = cos((0:(nleg-1)).' .*acos(xs(:).')).';
-
-c_cheb = T\dets;
-
-cs = c_cheb/c_cheb(end);
-
-B = .5*ones(nleg-1,2);
-A = spdiags(B,[-1,1],nleg-1,nleg-1);
-A(1,2) = 1/sqrt(2);A(2,1) = 1/sqrt(2);
-en = zeros(1,nleg-1); en(end)=1;
-cs(1) = sqrt(2)*cs(1);
-
-B = A - .5*cs(1:nleg-1)*en;
-
-
-rts = eig(B);
-
-rts = rts(abs(rts)<1);
-
-rts= rts(abs(imag(rts))<1e-3);
-
-rts = (tmax-tmin)*(rts+1)*.5 + tmin;
-
-figure(5)
-plot(kappa,abs(dets))
-
-figure(4);clf
-plot(rts,'o')
-title('Poles','Interpreter','latex')
-set(gca,'fontsize',16)
-
-%%
-
-if isempty(rts); return, end
-kappa_rt = real(rts); nkappa = 1;
+figure(2);clf;
+t = tiledlayout('flow'); t.Padding = 'loose';
+for j = 1:length(zks)
+    % for j = 7
+    zk = zks(j);
+if isempty(poles{j}), continue, end
+kappa_rt = real(poles{j}(1)); nkappa = 1;
 l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
 
@@ -121,7 +47,7 @@ opts = [];
 opts.sing = 'log';
 
 start = tic;
-sys = chunkermat(chnkr,fkern, opts);
+sys = chunkermat(chnkr,fkfrn, opts);
 sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
 
 sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
@@ -182,8 +108,7 @@ for i = -10:10
 end
 chnkrs = merge(chnkrs);
 
-figure(2);clf
-subplot(2,1,1)
+nexttile()
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = uscat;
 h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
@@ -200,25 +125,7 @@ set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
 
-subplot(2,1,2)
-h = pcolor(X,Y, reshape((abs(us)),size(X))); h.EdgeColor = 'None';
-hold on
-plot(chnkrs,'k.','markersize',15)
-c = colorbar;
-hold off
-axis equal
-xlim([min(X(:)),max(X(:))])
-ylim([min(Y(:)),max(Y(:))])
-xlabel('$x_1$','Interpreter','latex')
-ylabel('$x_2$','Interpreter','latex')
-c.Label.String = '$|v_\xi|$';
-c.Label.Interpreter = 'latex';
-set(gca,'FontSize',18)
-set(gca,'TickLabelInterpreter','latex');
-set(c,'TickLabelInterpreter','latex');
-
-exportgraphics(gcf,'clamped_mode.pdf','resolution',200)
-
+end
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
 omega = 2*pi/d;

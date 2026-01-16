@@ -5,7 +5,9 @@ addpath(genpath('../../flexural-staircases'))
 nu = 0.3; 
 % zks = linspace(0.8,pi/d,40);
 kappas = linspace(1,pi/d,10);
-kappas = linspace(0.3+1e-2,pi/d,30);
+kappas = linspace(0.3+1e-2,pi/d,40);
+kappas = linspace(0.3+1e-2,pi/d,80);
+kappas = kappas(6:end);
 % kappas = 1;
 % poles = 0*kappas;
 npoles = length(kappas);
@@ -19,19 +21,19 @@ poles = cell(1,npoles);
 % chnkr = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 % chnkr = reverse(chnkr);
 
-tol = 1e-5;
+tol = 1e-4;
 for i = flip(1:npoles)
     i
 kappa = kappas(i);
 nkappa = 1;
 
 
-kmin = 0.3; kmax = kappa-1e-2;
+kmin = 0.3; kmax = kappa-1e-4;
 poles{i} = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
 
 figure(1);clf
 hold on
-for ii = 1:i
+for ii = 1:npoles
 plot(kappas(ii)+0*real(poles{ii}),real(poles{ii}),'o','linewidth',2)
 end
 plot(kappas,kappas,'-','linewidth',2)
@@ -42,6 +44,7 @@ set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
 
+save('free_square_modes.mat')
 end
 
 %%
@@ -58,6 +61,8 @@ set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
 % exportgraphics(gcf,'free_disp.pdf')
+
+
 
 
 function [r,d,d2] = cos_func(t,d,A)

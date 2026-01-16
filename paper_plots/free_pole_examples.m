@@ -1,6 +1,6 @@
 % load('free_disp.mat')
-% load('free_disp2.mat')
-load('square_poles1.mat')
+load('free_disp2.mat')
+% load('square_poles1.mat')
 nplot = 200;
 % nplot = 60;
 xx = linspace(-6*d, 6*d,nplot);
@@ -55,16 +55,15 @@ iexamp = ibdry(2,:) - 2;
 % iexamp = iexamp(~isnan(pole_vec));
 
 figure(5);clf
-% plot(zks_vec, real(pole_vec),'o-','linewidth',2)
-plot( real(pole_vec),zks_vec,'o-','linewidth',2)
+plot(zks_vec, real(pole_vec),'o-','linewidth',2)
 hold on
 % for ii = 1:length(zks)
 % plot(zks(ii)+0*real(poles{ii}),real(poles{ii}),'o','linewidth',2)
 % end
 plot(zks,zks,'-','linewidth',2)
 hold off
-ylabel('$k$','interpreter','latex')
-xlabel('$\xi_k$','interpreter','latex')
+xlabel('$k$','interpreter','latex')
+ylabel('$\xi_k$','interpreter','latex')
 set(gca,'fontsize',18)
 set(gca,'ticklabelinterpreter','latex')
 drawnow()
