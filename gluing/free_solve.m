@@ -48,7 +48,7 @@ us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
 
 figure(1);clf
-h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
 plot(chnkrs,'k.','markersize',15)
