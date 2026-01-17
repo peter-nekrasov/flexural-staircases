@@ -82,7 +82,7 @@ xip = 1 + amp*1i*d_r*cos(ts*d_r);
 ws_r = ws*xip;
 
 %%
-src = []; src.r = [-2;-1]; 
+src = []; src.r = [-1.6;-0.]; 
 
 nplot = 240;
 nplot = 60;
@@ -223,6 +223,7 @@ plot(real(chnkr_tr.r(2,:)), log10(abs(dens(4:4:end))),'.')
 % 
 % plot(real(chnkr_tr.r(2,:)), imag(chnkr_tr.r(2,:)),'.')
 
+%%
 
 a = reshape(dens,4,16,[]);
 

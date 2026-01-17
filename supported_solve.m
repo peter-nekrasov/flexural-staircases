@@ -8,6 +8,7 @@
 kappa = 0.5;
 % kappa = pi/d;
 ws = 1;
+nu = 0.3;
 % 
 % nnode = 62;
 % ts = linspace(-pi/d,pi/d,nnode);
@@ -32,7 +33,7 @@ if false
     cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
     % cparams = []; cparams.ta = 0; cparams.tb = d;
     nch = 20/2; A = 0.2; 
-    % A = 0;
+    A = 0;
     chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
     chnkr = reverse(chnkr);
     wtarg = cos_func(targ.r(1,:),d,A) ;
