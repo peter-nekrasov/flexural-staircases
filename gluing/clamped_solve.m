@@ -101,7 +101,7 @@ chnkr2 = chunkerfuncuni(f, nch, cparams);
 % end
 chnkr2 = [0,-1;1,0]*chnkr2;
 %%
-u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
+% u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 %%
 % l=2; N = 40; a = 15; M = 1e4;
 % kap = pi/d;
@@ -110,14 +110,12 @@ u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 % ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval_trx',kap,d,sn,s0_l,sn_l,l,1,nu);
 % 
 % u_tr = ikern(struct('r',[1;0],'n',[1;1]/sqrt(2),'d',[1;-1],'d2',[0.3;0]),chnkr2);
-u = u_tr(4:4:end,1);
+% u = u_tr(4:4:end,1);
 % %%
 % u = skern_0(src,chnkr2);
 % u = u(:,1);
 
 
-figure(3);clf
-plot(real(chnkr2.r(2,:)), real(u),'.')
 % plot(real(chnkr2.r(2,:)), log10(abs(u)),'.')
 % 
 % plot(real(chnkr2.r(2,:)), imag(chnkr2.r(2,:)),'.')
@@ -129,7 +127,7 @@ src.r = [1;0.];
 tic;
 u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 toc;
-h = 1e-3;
+h = 1e-1;
 u_tr_p = clamped_scatter(src,chnkr2+[h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 u_tr_m = clamped_scatter(src,chnkr2+[-h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 
@@ -141,9 +139,9 @@ u_tr_m = clamped_scatter(src,chnkr2+[-h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 %%
 a = (u_tr_p -  u_tr_m)/2/h;
 
-norm(a(1:4:end,:) - u_tr(2:4:end,:))
-norm(a(2:4:end,:) - u_tr(3:4:end,:))
-norm(a(3:4:end,:) - u_tr(4:4:end,:))
+[norm(a(1:4:end,:) - u_tr(2:4:end,:)),...
+norm(a(2:4:end,:) - u_tr(3:4:end,:)),...
+norm(a(3:4:end,:) - u_tr(4:4:end,:))]
 
 
 i = 2;
@@ -153,8 +151,10 @@ plot(real(chnkr2.r(2,:)), log10(abs(a(i:4:end,:) - u_tr(i+1:4:end,:))),'.')
 % c = b(abs(chnkr2.r(2,:))< 4).'
 
 b = (u_tr_p +  u_tr_m - 2*u_tr)/h^2;
-norm(b(2:4:end,:) - u_tr(4:4:end,:))
-i = 2;
-plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - u_tr(i+2:4:end,:))),'.')
+[norm(b(1:4:end,:) - u_tr(3:4:end,:)),norm(b(2:4:end,:) - u_tr(4:4:end,:))]
+% i = 2;
+% plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - u_tr(i+2:4:end,:))),'.')
 
 % plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - a(i+1:4:end,:))),'.')
+% figure(3);clf
+% plot(real(chnkr2.r(2,:)), real( u_tr(3:4:end,1)),'.')

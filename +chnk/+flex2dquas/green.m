@@ -44,7 +44,7 @@ r = sqrt(r2);
 npt = size(r,1);
 
 ythresh = 2*d/2;
-ythresh = 2*d;
+% ythresh = 2*d;
 iclose = abs(ry) < ythresh;
 ifar = ~iclose;
 
