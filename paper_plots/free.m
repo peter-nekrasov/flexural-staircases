@@ -2,11 +2,12 @@
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
 zk = 1.2;
+zk = 7;
 % d = 1.2;
 d = 2;
 nu = 0.3; 
 
-nnode = 62;
+nnode = 62; nnode = 42;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -27,6 +28,7 @@ nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/4) - 1.2;
+yy = linspace(0, 6*d,3*nplot/4) - 3.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 

@@ -2,20 +2,18 @@ function u = supported_layer(chnkr_tr,dens,targ,chnkr,ifree,itrdata,zk,nu,kappa,
 nkappa = length(kappa);
 
 targmod = [];
-targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+targmod.r = real([mod(real(targ.r(1,:)+d/2),d)-d/2;targ.r(2,:)]);
 % targmod = targ;
-nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
+nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
+targmod.r = targ.r(:,:) - nshift.*[d;0];
 
 
 %%
 ising = 1;
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs_trx',kappa,d,sn,[],[],l,ising,nu);
 
-wts = chnkr_tr.wts(:).';
-wts = repmat(wts,4,1);
-dens = dens .* wts(:);
-
-rhs = -bskern(chnkr_tr,chnkr)*dens;
+wts = chnkr_tr.wts(:).'; wts = repmat(wts,4,1);
+rhs = -bskern(chnkr_tr,chnkr)*(dens .* wts(:));
 
 % Solving linear system
 sol = 0*rhs;

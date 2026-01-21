@@ -73,26 +73,33 @@ case {'clamped_plate_bcs_trx'}
     firstbc = 1/(2*zk^2).*val ;
     secondbc = 1/(2*zk^2).*(grad(:, :, 1).*nxtarg + grad(:, :, 2).*nytarg);
    
-    submat(:,1,:,1:4:end) = reshape(firstbc,nkappa,1,nt,[]);
-    submat(:,2,:,1:4:end) = reshape(secondbc,nkappa,1,nt,[]);
+    submat(:,1,:,4:4:end) = reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,4:4:end) = reshape(secondbc,nkappa,1,nt,[]);
 
     firstbc = 1/(2*zk^2).*grad(:, :, 1) ;
     secondbc = 1/(2*zk^2).*(hess(:, :, 1).*nxtarg + hess(:, :, 2).*nytarg);
    
-    submat(:,1,:,2:4:end) = -reshape(firstbc,nkappa,1,nt,[]);
-    submat(:,2,:,2:4:end) = -reshape(secondbc,nkappa,1,nt,[]);
+    submat(:,1,:,3:4:end) = -reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,3:4:end) = -reshape(secondbc,nkappa,1,nt,[]);
 
     firstbc = 1/(2*zk^2).*hess(:, :, 1) ;
     secondbc = 1/(2*zk^2).*(third(:, :, 1).*nxtarg + third(:, :, 2).*nytarg);
-   
-    submat(:,1,:,3:4:end) = reshape(firstbc,nkappa,1,nt,[]);
-    submat(:,2,:,3:4:end) = reshape(secondbc,nkappa,1,nt,[]);
+
+    firstbc = firstbc + 2*1/(2*zk^2).*hess(:, :, 3) ;
+    secondbc = secondbc + 2*(1/(2*zk^2).*(third(:, :, 3).*nxtarg + third(:, :, 4).*nytarg));
+
+    submat(:,1,:,2:4:end) = reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,2:4:end) = reshape(secondbc,nkappa,1,nt,[]);
 
     firstbc = 1/(2*zk^2).*third(:, :, 1) ;
     secondbc = 1/(2*zk^2).*(fourth(:, :, 1).*nxtarg + fourth(:, :, 2).*nytarg);
-   
-    submat(:,1,:,4:4:end) = -reshape(firstbc,nkappa,1,nt,[]);
-    submat(:,2,:,4:4:end) = -reshape(secondbc,nkappa,1,nt,[]);
+
+    firstbc = firstbc+2*1/(2*zk^2).*third(:, :, 1) ;
+    secondbc = secondbc + 2*(1/(2*zk^2).*(fourth(:, :, 1).*nxtarg + fourth(:, :, 2).*nytarg));
+
+
+    submat(:,1,:,1:4:end) = -reshape(firstbc,nkappa,1,nt,[]);
+    submat(:,2,:,1:4:end) = -reshape(secondbc,nkappa,1,nt,[]);
     
     submat = reshape(submat, [],4*ns);
 
@@ -252,8 +259,8 @@ case {'clamped_plate_eval_trx'}
        (3/(2*zk^2).*(sixth(:, :, 1).*(nx.*taux.*taux) + sixth(:, :, 2).*(2*nx.*taux.*tauy + ny.*taux.*taux) +...
        sixth(:, :, 3).*(nx.*tauy.*tauy + 2*ny.*taux.*tauy) + sixth(:, :, 4).*(ny.*tauy.*tauy)));  % G_{ny ny ny} + 3G_{ny tauy tauy}
 
-    K2 =  -(1/(2*zk^2).*(fifth(:, :, 1).*(nx.*nx) + fifth(:, :, 2).*(2*nx.*ny) + fourth(:, :, 3).*(ny.*ny)))+...
-          (1/(2*zk^2).*(fifth(:, :, 1).*(taux.*taux) + fifth(:, :, 2).*(2*taux.*tauy) + fourth(:, :, 3).*(tauy.*tauy))); % -G_{ny ny}  + G_{tauy tauy}
+    K2 =  -(1/(2*zk^2).*(fifth(:, :, 1).*(nx.*nx) + fifth(:, :, 2).*(2*nx.*ny) + fifth(:, :, 3).*(ny.*ny)))+...
+          (1/(2*zk^2).*(fifth(:, :, 1).*(taux.*taux) + fifth(:, :, 2).*(2*taux.*tauy) + fifth(:, :, 3).*(tauy.*tauy))); % -G_{ny ny}  + G_{tauy tauy}
 
     submat(:,4,:,1:2:end) = reshape(K1,nkappa,1,nt,[]);
     submat(:,4,:,2:2:end) = reshape(K2,nkappa,1,nt,[]);

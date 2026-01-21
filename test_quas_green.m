@@ -1,7 +1,7 @@
-d = 1;
-zk = 1.5;
+d = 1; d = 2;
+zk = 1.5; zk = 7;
 
-nnode = 80;
+nnode = 61; nnode = 41;
 
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
@@ -22,8 +22,9 @@ val1 = (xip*kern1.eval(src,targ))*ws;
 kern2 = kernel('h','s',zk);
 val2 = kern2.eval(src,targ);
 
-err1 = abs(val1-val2) / abs(val1);
+err1 = abs(val1-val2) / abs(val1)
 
+return
 h0qkern = kernel('hq','s',zk,xi,d);
 k0qkern = kernel('hq','s',1i*zk,xi,d);
 

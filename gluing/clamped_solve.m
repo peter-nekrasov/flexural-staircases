@@ -127,7 +127,7 @@ src.r = [1;0.];
 tic;
 u_tr = clamped_scatter(src,chnkr2,chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 toc;
-h = 1e-1;
+h = 1e-2;
 u_tr_p = clamped_scatter(src,chnkr2+[h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 u_tr_m = clamped_scatter(src,chnkr2+[-h;0],chnkr,1,1,zk,nu,kappa,d,ws,sys,sn,l);
 

@@ -2,14 +2,11 @@ function u = clamped_scatter(src,targ,chnkr,ifree,itrdata,zk,nu,kappa,d,ws,sys,s
 % itrdata = 0, get field, itrdata = 1, get field and first 3 x1 ders
 nkappa = length(kappa);
 
-
 targmod = [];
 targmod.r = real([mod(real(targ.r(1,:)+d/2),d)-d/2;targ.r(2,:)]);
 % targmod = targ;
 nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
-
 targmod.r = targ.r(:,:) - nshift.*[d;0];
-
 
 %%
 ising = 1;

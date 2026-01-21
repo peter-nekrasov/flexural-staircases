@@ -7,7 +7,6 @@ targmod = [];
 targmod.r = real([mod(real(targ.r(1,:)+d/2),d)-d/2;targ.r(2,:)]);
 % targmod = targ;
 nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
-
 targmod.r = targ.r(:,:) - nshift.*[d;0];
 
 
