@@ -25,10 +25,10 @@ yy = linspace(0, 6*d,3*nplot/4) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
-targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+targmod = real([mod((targ.r(1,:)+d/2-mean(chnkr.r(1,:))),d)-d/2+mean(chnkr.r(1,:));targ.r(2,:)]);
 iout = chunkgraphinregion(cgrph,targmod)==1;
 src = []; src.r = [[0;-2], [0;2]]; %src.n = [1;0];
-    
+src.r = [mean(chnkr.r(:,:),2), [0;2]];    
 targout = []; targout.r = targ.r(:,iout);
 %%
 [sys,sn,l] = clamped_mat(chnkr,zk,nu,kappa,d);
@@ -158,3 +158,33 @@ b = (u_tr_p +  u_tr_m - 2*u_tr)/h^2;
 % plot(real(chnkr2.r(2,:)), log10(abs(b(i:4:end,:) - a(i+1:4:end,:))),'.')
 % figure(3);clf
 % plot(real(chnkr2.r(2,:)), real( u_tr(3:4:end,1)),'.')
+
+%%
+ising = 1;
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs_trx',kappa,d,sn,[],[],l,ising,nu);
+
+% chnkr2 = []; chnkr2.r = [0;0]; chnkr2.n = [1;0]; chnkr2.n = [0;1];
+
+u_bc = bskern(chnkr2, chnkr);
+h = 1e-2;
+u_bc_p = bskern(chnkr2+[h;0], chnkr);
+u_bc_m = bskern(chnkr2+[-h;0], chnkr);
+
+u_bc_pd = bskern(chnkr2+[0;h], chnkr);
+u_bc_md = bskern(chnkr2+[0;-h], chnkr);
+
+
+%%
+a = (u_bc_p -  u_bc_m)/2/h;
+
+% [norm(a(1:4:end,:) - u_bc(2:4:end,:),'fro'),...
+% norm(a(2:4:end,:) - u_bc(3:4:end,:),'fro'),...
+% norm(a(3:4:end,:) - u_bc(4:4:end,:),'fro')]
+
+norm(a(:,4:4:end) - u_bc(:,3:4:end),'fro')
+
+%%
+
+a = (u_bc_p +  u_bc_m + 2*u_bc_pd + 2*u_bc_md- 6*u_bc)/h^2;
+[norm(a(:,4:4:end) - u_bc(:,2:4:end),'fro'),...
+norm(a(:,3:4:end) - u_bc(:,1:4:end),'fro')]

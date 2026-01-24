@@ -1,22 +1,20 @@
-
-ifacc = 1;
+ifacc = 0;
 d_l = 2;
 d_r = 2;
 
-
-chnkr_l = chunkerfunc(@(t) starfish(t,3,0));
-chnkr_l = 0.5*chnkr_l;
-% chnkr_l = chnkr_l+ [-d_l/2;0.8];
-chnkr_l = merge([chnkr_l+ [-d_l/2;0.8],chnkr_l+ [-d_l/2;-0.8]]);
+% chnkr_l0 = chunkerfunc(@(t) starfish(t,3,0));
+% chnkr_l0 = 0.5*chnkr_l0;
+% chnkr_l = chnkr_l0+ [-d_l/2;0.8];
+% chnkr_l = merge([chnkr_l0+ [-d_l/2;0.8],chnkr_l0+ [-d_l/2;-0.8]]);
+chnkr_l = merge([chnkr_l0+ [0;0.8],chnkr_l0+ [0;-0.8]]);
 
 cgrph_l = tochunkgraph(chnkr_l);
 
-
-chnkr_r = chunkerfunc(@(t) starfish(t,5,0));
-chnkr_r = 0.5*chnkr_r;
-chnkr_r = chnkr_r+ [-d_r/2;-0.8];
-% chnkr_r = merge([chnkr_r+ [-d_r/2;0.8],chnkr_r+ [-d_r/2;-0.8]]);
-
+% 
+% chnkr_r = chunkerfunc(@(t) starfish(t,5,0));
+% chnkr_r = 0.5*chnkr_r;
+% chnkr_r = chnkr_r+ [-d_r/2;-0.8];
+% % chnkr_r = merge([chnkr_r+ [-d_r/2;0.8],chnkr_r+ [-d_r/2;-0.8]]);
 cgrph_r = tochunkgraph(chnkr_r);
 
 
@@ -37,7 +35,6 @@ nu_r = nu_l;
 % cgrph_l = cgrph_r;
 % nu_l = nu_r;
 
-
 chnkrs_L = [];
 chnkrs_R = [];
 for i = (-6:6)
@@ -51,8 +48,6 @@ chnkrs_R = chnkrs_R(:,chnkrs_R(1,:)>0);
 %%
 a = 3;
 b = 1/a/2;
-t0 =-5;
-t1 = 5;
 
 t0 = -10;
 t1 = 10;
@@ -106,24 +101,30 @@ ws_r = ws*xip;
 %%
 % src = []; src.r = [-1.6;-0.]; 
 src = []; src.r = [d_r;-0.]; 
-src = []; src.r = [0.5;0.5]; 
+src = []; src.r = [0.5;0.5];
+src = []; src.r = [-0.5;0];
 
 
 nplot = 240;
-nplot = 60;nplot = 120;
+% nplot = 60;nplot = 120;
 xx = linspace(-4*d_l, 4*d_l,nplot);
-yy = linspace(-3*d_l, 3*d_l,3*nplot/4);
+% xx = linspace(-3*d_l, 3*d_l,nplot);
+% yy = linspace(-3*d_l, 3*d_l,3*nplot/4);
+yy = linspace(-2*d_l, 2*d_l,2*nplot/4);
+% yy = linspace(-3*d_l, 3*d_l,nplot);
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
 % targmod = real([mod(targ.r(1,:)+d_l/2,d_l)-d_l/2;targ.r(2,:)]);
-targmod = real([mod(targ.r(1,:),d_l)-d_l;targ.r(2,:)]);
+% targmod = real([mod(targ.r(1,:),d_l)-d_l;targ.r(2,:)]);
+targmod = real([mod(targ.r(1,:)+d_l/2-mean(chnkr_l.r(1,:)),d_l)-d_l/2+mean(chnkr_l.r(1,:));targ.r(2,:)]);
 iout = chunkgraphinregion(cgrph_l,targmod)==1;
 il = iout & (X(:)<0);
 targl = []; targl.r = targ.r(:,il);
 
 % targmod = real([mod(targ.r(1,:)+d_r/2,d_r)-d_r/2;targ.r(2,:)]);
-targmod = real([mod(targ.r(1,:),d_r)-d_r;targ.r(2,:)]);
+% targmod = real([mod(targ.r(1,:),d_r)-d_r;targ.r(2,:)]);
+targmod = real([mod(targ.r(1,:)+d_r/2-mean(chnkr_r.r(1,:)),d_r)-d_r/2+mean(chnkr_r.r(1,:));targ.r(2,:)]);
 iout = chunkgraphinregion(cgrph_r,targmod)==1;
 ir = iout & (X(:)>0);
 targr = []; targr.r = targ.r(:,ir);
@@ -133,17 +134,14 @@ t1 = tic;
 [sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r] = free_mat(chnkr_r,zk,nu_r,kappa_r,d_r);
 
 %%
-[rhsmat_l,layermat_l] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_l,1,zk,nu_l,kappa_l,d_l,sn_l,l_l,s0_l_l,sn_l_l);
-[rhsmat_r,layermat_r] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_r,1,zk,nu_r,kappa_r,d_r,sn_r,l_r,s0_l_r,sn_l_r);
+[rhsmat_l,rhsmat0_l,layermat_l,layermat0_l] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_l,1,zk,nu_l,kappa_l,d_l,sn_l,l_l,s0_l_l,sn_l_l);
+[rhsmat_r,rhsmat0_r,layermat_r,layermat0_r] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_r,1,zk,nu_r,kappa_r,d_r,sn_r,l_r,s0_l_r,sn_l_r);
 tpre = toc(t1)
-
-
-
 
 %%
 t1 = tic;
-data = free_scatter(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r) ...
-    - free_scatter(src,chnkr_tr,chnkr_l,1,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l);
+data = free_scatter_fast(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,layermat_r,layermat0_r) ...
+    - free_scatter_fast(src,chnkr_tr,chnkr_l,1,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,layermat_l,layermat0_l);
 % data = free_scatter(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r);
 trhs = toc(t1)
 
@@ -153,8 +151,8 @@ dvals = (-1).^(1:4*chnkr_tr.npt);
 Amat = diag(dvals);
 
 apply_sys = @(dens) Amat*dens ...
-    + free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_r,0,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,layermat_r) ...
-    - free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_l,0,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,layermat_l);
+    + free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_r,0,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,rhsmat0_r,layermat_r,layermat0_r) ...
+    - free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_l,0,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,rhsmat0_l,layermat_l,layermat0_l);
 
 % 
 
@@ -165,8 +163,8 @@ tsolve = toc(t1)
 %%
 t1 = tic;
 
-ul = free_layer_fast(chnkr_tr,dens,targl,chnkr_l,1,0,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l);
-ur = free_layer_fast(chnkr_tr,dens,targr,chnkr_r,1,0,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r);
+ul = free_layer_fast(chnkr_tr,dens,targl,chnkr_l,1,0,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,rhsmat0_l);
+ur = free_layer_fast(chnkr_tr,dens,targr,chnkr_r,1,0,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,rhsmat0_r);
 
 tlayer = toc(t1)
 
@@ -187,7 +185,7 @@ us = -uscat+uin;
 
 % us = uscat;
 figure(2);clf
-h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape((abs(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
 plot(chnkrs_L(1,:),chnkrs_L(2,:),'k.','markersize',15)
@@ -225,9 +223,7 @@ u0 = skern_0(src,targ);
 if ifacc
     src = []; src.r = [-d_r;-0.]; 
     t1 = tic;
-    % data = free_scatter(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r) ...
-    %     - free_scatter(src,chnkr_tr,chnkr_l,1,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l);
-    data = free_scatter(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r);
+    data = free_scatter_fast(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,layermat_r,layermat0_r);
     trhs = toc(t1)
     
     %%
@@ -236,8 +232,8 @@ if ifacc
     Amat = diag(dvals);
     
     apply_sys = @(dens) Amat*dens ...
-        + free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_r,0,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,layermat_r) ...
-        - free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_l,0,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,layermat_l);
+        + free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_r,0,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,rhsmat0_r,layermat_r,layermat0_r) ...
+        - free_layer_fast(chnkr_tr,dens,chnkr_tr,chnkr_l,0,1,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,rhsmat0_l,layermat_l,layermat0_l);
     
     % 
     
@@ -248,8 +244,8 @@ if ifacc
     %%
     t1 = tic;
     
-    ul = free_layer_fast(chnkr_tr,dens,targl,chnkr_l,1,0,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l);
-    ur = free_layer_fast(chnkr_tr,dens,targr,chnkr_r,1,0,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r);
+    ul = free_layer_fast(chnkr_tr,dens,targl,chnkr_l,1,0,zk,nu_l,kappa_l,d_l,ws_l,sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l,rhsmat_l,rhsmat0_l);
+    ur = free_layer_fast(chnkr_tr,dens,targr,chnkr_r,1,0,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,rhsmat_r,rhsmat0_r);
     
     tlayer = toc(t1)
     %%

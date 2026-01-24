@@ -25,7 +25,8 @@ yy = linspace(0, 6*d,3*nplot/4) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
-targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+targmod = real([mod((targ.r(1,:)+d/2-mean(chnkr.r(1,:))),d)-d/2+mean(chnkr.r(1,:));targ.r(2,:)]);
+
 iout = chunkgraphinregion(cgrph,targmod)==1;
 src = []; src.r = [[0;-2], [0;2]]; %src.n = [1;0];
     

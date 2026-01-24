@@ -94,8 +94,8 @@ case {'clamped_plate_bcs_trx'}
     firstbc = 1/(2*zk^2).*third(:, :, 1) ;
     secondbc = 1/(2*zk^2).*(fourth(:, :, 1).*nxtarg + fourth(:, :, 2).*nytarg);
 
-    firstbc = firstbc+2*1/(2*zk^2).*third(:, :, 1) ;
-    secondbc = secondbc + 2*(1/(2*zk^2).*(fourth(:, :, 1).*nxtarg + fourth(:, :, 2).*nytarg));
+    firstbc = firstbc+2*1/(2*zk^2).*third(:, :, 3) ;
+    secondbc = secondbc + 2*(1/(2*zk^2).*(fourth(:, :, 3).*nxtarg + fourth(:, :, 4).*nytarg));
 
 
     submat(:,1,:,1:4:end) = -reshape(firstbc,nkappa,1,nt,[]);

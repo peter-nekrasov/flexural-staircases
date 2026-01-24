@@ -1,7 +1,8 @@
-function u = free_layer_fast(chnkr_tr,dens,targ,chnkr,ifree,itrdata,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l,rhsmat,layermat)
+function u = free_layer_fast(chnkr_tr,dens,targ,chnkr,ifree,itrdata,zk,nu,kappa,d,ws,sys,sn,l,H,s0_l,sn_l,rhsmat,rhsmat0,layermat,layermat0)
 nkappa = length(kappa);
-if nargin < 19
+if nargin < 20
     layermat = [];
+    layermat0 = [];
 end
 
 targmod = [];
@@ -11,7 +12,7 @@ nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
 targmod.r = targ.r(:,:) - nshift.*[d;0];
 
 wts = chnkr_tr.wts(:).'; wts = repmat(wts,4,1);
-rhs = -rhsmat*(dens .* wts(:));
+rhs = -rhsmat*(rhsmat0*(dens .* wts(:)));
 
 % Solving linear system
 sol = 0*rhs;
@@ -34,7 +35,7 @@ if itrdata == 0
     u = zeros(size(targ.r(:,:),2), size(dens,2));
     
     if ~isempty(layermat)
-        u = layermat*dens_comb;
+        u = layermat*(layermat0*dens_comb);
     else
         ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
         ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate_eval',nu);
@@ -69,7 +70,7 @@ if itrdata == 0
     end
 else
     if ~isempty(layermat)
-        u = layermat*dens_comb;
+        u = layermat*(layermat0*dens_comb);
     else
     ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval_trx',kappa,d,sn,s0_l,sn_l,l,1,nu);
     wts = repmat(chnkr.wts(:).',3,1);

@@ -7,7 +7,6 @@ targmod.r = real([mod(real(targ.r(1,:)+d/2),d)-d/2;targ.r(2,:)]);
 nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
 targmod.r = targ.r(:,:) - nshift.*[d;0];
 
-
 %%
 ising = 1;
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs_trx',kappa,d,sn,s0_l,sn_l,l,ising,nu);

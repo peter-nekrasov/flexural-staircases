@@ -4,7 +4,8 @@ nkappa = length(kappa);
 
 
 targmod = [];
-targmod.r = real([mod(real(targ.r(1,:)+d/2),d)-d/2;targ.r(2,:)]);
+targmod.r = real([mod(real(targ.r(1,:)+d/2-mean(chnkr.r(1,:))),d)-d/2+mean(chnkr.r(1,:));targ.r(2,:)]);
+
 % targmod = targ;
 nshift = round(real(targ.r(1,:)-targmod.r(1,:))/d);
 targmod.r = targ.r(:,:) - nshift.*[d;0];
