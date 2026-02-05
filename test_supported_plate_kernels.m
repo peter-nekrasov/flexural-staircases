@@ -65,3 +65,23 @@ k1fd = fkern2(src,targ);
 k2fd = d2dn2*n_sol + nu*d2dtau2*tau_sol;
 
 err = abs(ref - [k1fd;k2fd])
+
+%% checking bcs
+
+fkern3 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',xi,d,sn,[],[],l,ising,nu);
+fkern4 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',xi,d,sn,[],[],l,ising,nu);
+
+ref = fkern3(src,targ);
+
+targ.r = chnkr.r(:,targind) +  h*(0:5).*chnkr.n(:,targind);
+n_sol = fkern4(src,targ);
+
+targ.r =  chnkr.r(:,targind) +  h*(-4:4).*chnkr.d(:,targind) / vecnorm(chnkr.d(:,targind));
+tau_sol = fkern4(src,targ);
+
+targ.r =  chnkr.r(:,targind);
+k1fd = fkern4(src,targ);
+
+k2fd = d2dn2*n_sol + nu*d2dtau2*tau_sol;
+
+err2 = abs(ref - [k1fd;k2fd])
