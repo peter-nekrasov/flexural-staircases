@@ -20,9 +20,11 @@ sn = cat(3,sn1,sn2);
 skern = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
-ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',xi,d,sn,[],[],l,ising,nu);
-fkern2 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',xi,d,sn,[],[],l,ising,nu);
+fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',xi,d,sn,[],[],l,0,nu);
+fkern1l =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_log',nu);
+fkern1s =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_smooth',nu);
+
+fkern2 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',xi,d,sn,[],[],l,1,nu);
 
 chnkr = chunkerfuncuni(@(t) ellipse(t,2,1),32);
 chnkr = chnkr.sort();
@@ -42,14 +44,15 @@ src.data = zeros(2,1);
 src.data(1) = kp(targind+10);
 src.data(2) = kpp(targind+10);
 
-ref = fkern1(src,targ);
+ref = fkern1(src,targ)+fkern1l(src,targ)+[0 0; fkern1s(src,targ) 0];
+% ref = fkern1(src,targ)+fkern1l(src,targ)+fkern1s(src,targ);
 
 k11ref = ref(1,1);
 k21ref = ref(2,1);
 k12ref = ref(1,2);
 k22ref = ref(2,2);
 
-h = 0.001;
+h = 0.0001;
 d2dn2 = [	15/4	-77/6	107/6	-13	61/12	-5/6] / h^2;
 d2dtau2 = [-1/560	8/315	-1/5	8/5	-205/72	8/5	-1/5	8/315	-1/560] / h^2;
 
