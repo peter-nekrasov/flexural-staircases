@@ -1,10 +1,10 @@
 ifacc = 1;
 d_l = 2;
-d_r = 2.5;
+d_r = 2;
 
 
 chnkr_l = chunkerfunc(@(t) starfish(t,3,0));
-chnkr_l = 0.4*chnkr_l + [-d_l/2;0];
+% chnkr_l = 0.4*chnkr_l + [-d_l/2;0];
 chnkr_l = merge([0.4*chnkr_l + [-d_l/2;2],0.4*chnkr_l + [-d_l/2;-2]]);
 % chnkr_l = refine(chnkr_l,struct('nover',1));
 cgrph_l = tochunkgraph(chnkr_l);
@@ -16,6 +16,7 @@ chnkr_r = 0.4*chnkr_r + [d_r/2;-1];
 cgrph_r = tochunkgraph(chnkr_r);
 
 zk = 1.;
+zk = 7;
 
 nu_l = 0.3;
 nu_r = nu_l;
@@ -90,7 +91,7 @@ ws_r = ws*xip;
 src = []; src.r = [-1.6;-0.];% src.r = mean(chnkr_r.r(:,:),2);
 
 nplot = 240;
-nplot = 60;
+% nplot = 60;
 xx = linspace(-4*d_l, 4*d_l,nplot);
 yy = linspace(-3*d_l, 3*d_l,3*nplot/4);
 [X,Y] = meshgrid(xx,yy);
