@@ -1,5 +1,6 @@
-zk = 1.2;
+zk = 1;
 d = 1.2;
+d = 2;
 nu = 0.3;
 
 kappa = 0.3+0.3*1i;
@@ -11,21 +12,27 @@ yy = xx;
 targ = []; targ.r = [X(:).'; Y(:).'];
 
 
-if true
-    cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
-    nch = 20; A = 1;
-    chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
-    chnkr = reverse(chnkr);
-    wtarg = cos_func(targ.r(1,:),d,A) ;
-    iout = targ.r(2,:) > wtarg(2,:);
-    src = []; src.r = [0;-2]; src.n = [1;0];
-    % src = []; src.r = [0;2]; src.n = [1;0];
-else
-    chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
-    targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
-    iout = ~chunkerinterior(chnkr,targmod);
-    src = []; src.r = [0;0]; src.n = [1;0];
-end
+% if true
+%     cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+%     nch = 20; A = 1;
+%     chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
+%     chnkr = reverse(chnkr);
+%     wtarg = cos_func(targ.r(1,:),d,A) ;
+%     iout = targ.r(2,:) > wtarg(2,:);
+%     src = []; src.r = [0;-2]; src.n = [1;0];
+%     % src = []; src.r = [0;2]; src.n = [1;0];
+% else
+%     chnkr = chunkerfunc(@starfish,struct('eps',1e-10)); chnkr = 0.25*chnkr;
+%     targmod = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+%     iout = ~chunkerinterior(chnkr,targmod);
+%     src = []; src.r = [0;0]; src.n = [1;0];
+% end
+
+targmod = [];
+targmod.r = real([mod(targ.r(1,:)+d/2,d)-d/2;targ.r(2,:)]);
+
+iout = chunkgraphinregion(cgrph,targmod)==1;
+ src = []; src.r = [0;-2]; src.n = [1;0];
 
 chnkr = makedatarows(chnkr,2);
 curv = signed_curvature(chnkr);

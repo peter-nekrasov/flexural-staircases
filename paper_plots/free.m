@@ -1,8 +1,8 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
-zk = 1.2;
-zk = 7;
+% zk = 1.2;
+% zk = 7;
 % d = 1.2;
 d = 2;
 nu = 0.3; 
@@ -17,7 +17,7 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-% kappa = kappa(1); ws = ws(1); ws = 1;
+kappa = kappa(1); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
 
