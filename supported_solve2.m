@@ -1,9 +1,10 @@
 zk = 1.2;
 d = 1.2;
+nu = 0.3;
 
 kappa = 0.3+0.3*1i;
 
-nplot = 40;
+nplot = 50;
 xx = linspace(-1.5*d, 1.5*d,nplot);
 yy = xx;
 [X,Y] = meshgrid(xx,yy);
@@ -26,6 +27,14 @@ else
     src = []; src.r = [0;0]; src.n = [1;0];
 end
 
+chnkr = makedatarows(chnkr,2);
+curv = signed_curvature(chnkr);
+kp = arclengthder(chnkr,curv);
+kpp = arclengthder(chnkr,kp);
+
+chnkr.data(1,:,:) = kp;
+chnkr.data(2,:,:) = kpp;
+
 targout = []; targout.r = targ.r(:,iout);
 
 %%
@@ -39,44 +48,51 @@ sn = cat(3,sn1,sn2);
 skern = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
-ht = 1.02*d; hb = -1.02*d;
-[pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
+% ht = 1.02*d; hb = -1.02*d;
+% [pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
 
 %%
 ising = 0;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,pxys_l,cs_l,l,ising);
-fkern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate');
-
-curv = signed_curvature(chnkr);
-curv = curv(:);
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu);
+fkern_0l =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_log',nu);           % build the desired kernel
+fkern_0s =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_smooth',nu);           % build the desired kernel
 
 opts = [];
-opts.sing = 'smooth';
-opts.quad = 'native';
+opts.sing = 'log';
 
-opts_0 = [];
-opts_0.sing = 'log';
+opts2 = [];
+opts2.quad = 'native';
+opts2.sing = 'smooth';
 
 start = tic;
-sys = chunkermat(chnkr,fkern, opts);
-sys_0 = chunkermat(chnkr,fkern_0, opts_0);
-sys = sys + sys_0 - 0.5*eye(2*chnkr.npt);
-sys(2:2:end,1:2:end) = sys(2:2:end,1:2:end) + curv.*eye(chnkr.npt);
-toc(start)
+M = chunkermat(chnkr,fkern_0l, opts);
+M2 = chunkermat(chnkr,fkern_0s, opts2);
+M3 = chunkermat(chnkr,fkern,opts2);
+% M3 = 0;
+
+c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
+
+M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + M2 + c0.*curv(:).^2.*eye(chnkr.npt) - 0*eye(chnkr.npt); % extra term shows up for the general problem
+M = M + M3 - 0.5*eye(2*chnkr.npt);
+
+sys =  M;
+toc(start);
 %%
 
-ising = 1;
-skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,ising);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,ising);
+skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,[],[],l,ising);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',kappa,d,sn,[],[],l,ising,nu);
 
-rhs = -bskern(src,chnkr);
+skern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 's',nu);
+bskern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_bcs',nu);
+
+rhs = bskern_0(src,chnkr)+bskern(src,chnkr);
 
 % Solving linear system
 sol = sys\rhs;
 
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_eval',kappa,d,sn,pxys_l,cs_l,l,0);
-ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate_eval');
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa,d,sn,[],[],l,ising,nu);
+ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_eval',nu);
 
 start1 = tic;
 uscat = chunkerkerneval(chnkr, ikern_0,sol, targout);
@@ -86,8 +102,8 @@ uscat = uscat + ikern(chnkr,targout) * (sol .* wts(:));
 t2 = toc(start1);
 fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
 
-uin = skern(src,targout);
-utot = uscat(:)+uin(:);
+uin = skern_0(src,targout) +skern(src,targout);
+utot = uscat(:)-uin(:);
 
 
 
@@ -109,7 +125,7 @@ scatter(src.r(1,:),src.r(2,:))
 h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
 colorbar
 hold off
-axis equal
+xlim([-1.5*d,1.5*d])
 
 
 

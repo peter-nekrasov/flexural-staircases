@@ -20,14 +20,24 @@ sn = cat(3,sn1,sn2);
 skern = kernel('l','s');
 s2trkern = kernel([kernel('l','s');kernel('l','sp')]);
 
-ht = 1.02*d; hb = -1.02*d;
-[pxys_l, cs_l] = build_pxys(zk,xi,d,ht,hb,skern,s2trkern,l,40);
+ns = 1:N;
+sn_l = 0;
+s0_l = 0;
+for j = [-l:-1, 1:l]
+    sn_l = sn_l + j.^-ns.*exp(1i*xi*d * j);
+    s0_l = s0_l + log(j*d).*exp(1i*xi*d * j);
+end
+
+sn_l = -sn_l + polylog(ns,exp(1i*xi*d)) + (-1).^-ns.*polylog(ns,exp(-1i*xi*d));
+sn_l = sn_l./ns./d.^ns;
+sn_l = sn_l / 2 / pi ;
+s0_l = quasi_dual_sum(0,d/2,0,xi,d).'- chnk.lap2dquas.green([0;0],[0;d/2],xi,d,0,sn_l,l,1);
 
 ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',xi,d,sn,pxys_l,cs_l,l,ising,nu);
-fkern2 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',xi,d,sn,pxys_l,cs_l,l,ising,nu);
-hilb = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',xi,d,pxys_l,cs_l,l,ising);
-hilbprime = @(s,t) chnk.lap2dquas.kern(s,t,'hilbprime',xi,d,pxys_l,cs_l,l,ising);
+fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',xi,d,sn,s0_l,sn_l,l,ising,nu);
+fkern2 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',xi,d,sn,s0_l,sn_l,l,ising,nu);
+hilb = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',xi,d,s0_l,sn_l,l,ising);
+hilbprime = @(s,t) chnk.lap2dquas.kern(s,t,'hilbprime',xi,d,s0_l,sn_l,l,ising);
 
 chnkr = chunkerfuncuni(@(t) ellipse(t,2,1),32);
 chnkr = chnkr.sort();
