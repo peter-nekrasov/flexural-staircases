@@ -272,7 +272,11 @@ if ~isempty(rxclose)
     tmpj = reshape(Js(:,:,2:end-7).*cs(:,:,2:end),[],N);
     tmpi = reshape(-Is(:,:,2:end-7).*cs(:,:,2:end),[],N);    
     val_far = 0.25*1i*(Js(:,:,1).*snj(:,:,1)-Is(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
-    val_far(rclose < 1e-14) = 0.25*1i*(snj(:,:,1)-sni(:,:,1)); % diagonal replacement
+    
+    nsub = sum(rclose < 1e-14);
+    if nsub > 0
+    val_far(:,rclose < 1e-14) = repmat(0.25*1i*(snj(:,:,1)-sni(:,:,1)),1,nsub); % diagonal replacement
+    end
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
@@ -293,8 +297,10 @@ if ~isempty(rxclose)
         
         grad_far = cat(3,cs(:,:,2).*grad_far_p - ss(:,:,2).*grad_far_t, ss(:,:,2).*grad_far_p + cs(:,:,2).*grad_far_t);
 
-        grad_far(:,rclose < 1e-14,1) = 0.25*1i*(zk*snj(:,:,2)-1i*zk*sni(:,:,2));
+        if nsub > 0
+        grad_far(:,rclose < 1e-14,1) = repmat(0.25*1i*(zk*snj(:,:,2)-1i*zk*sni(:,:,2)),1,nsub);
         grad_far(:,rclose < 1e-14,2) = 0;
+        end
 
         grad(:,iclose,:) = grad_near + grad_far; 
     end
@@ -341,9 +347,11 @@ if ~isempty(rxclose)
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
 
-        hess_far(:,rclose < 1e-14,1) = -0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))+.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3));
+        if nsub > 0     
+        hess_far(:,rclose < 1e-14,1) = repmat(-0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))+.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3)),1,nsub);
         hess_far(:,rclose < 1e-14,2) = 0;
-        hess_far(:,rclose < 1e-14,3) = -0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))-.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3));
+        hess_far(:,rclose < 1e-14,3) = repmat(-0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))-.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3)),1,nsub);
+        end
 
         hess(:,iclose,:) = hess_near + hess_far;
     end
@@ -412,10 +420,12 @@ if ~isempty(rxclose)
 
         third_far = cat(3,third_far_xxx,third_far_xxy,third_far_xyy,third_far_yyy);
 
-        third_far(:,rclose < 1e-14,1) = -.5*1i*(6*(zk)^3.*snj(:,:,2)-6*(1i*zk)^3*sni(:,:,2))/16 + .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48 ;
+        if nsub > 0      
+        third_far(:,rclose < 1e-14,1) = repmat(-.5*1i*(6*(zk)^3.*snj(:,:,2)-6*(1i*zk)^3*sni(:,:,2))/16 + .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48,1,nsub) ;
         third_far(:,rclose < 1e-14,2) = 0;
-        third_far(:,rclose < 1e-14,3) = -.5*1i*(2*(zk)^3.*snj(:,:,2)-2*(1i*zk)^3*sni(:,:,2))/16 - .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48 ;
+        third_far(:,rclose < 1e-14,3) = repmat(-.5*1i*(2*(zk)^3.*snj(:,:,2)-2*(1i*zk)^3*sni(:,:,2))/16 - .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48,1,nsub) ;
         third_far(:,rclose < 1e-14,4) = 0;
+        end
 
         third(:,iclose,:) = third_near + third_far;
     end
@@ -504,11 +514,13 @@ if ~isempty(rxclose)
 
         fourth_far = cat(3,fourth_far_xxxx,fourth_far_xxxy,fourth_far_xxyy,fourth_far_xyyy,fourth_far_yyyy);
 
-        fourth_far(:,rclose < 1e-14,1) = 0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) - 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
+        if nsub > 0        
+        fourth_far(:,rclose < 1e-14,1) = repmat(0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) - 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,nsub) ;
         fourth_far(:,rclose < 1e-14,2) = 0;
-        fourth_far(:,rclose < 1e-14,3) = 0.25*1i*(8*(zk)^4.*snj(:,:,1)-8*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0*0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) - 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
+        fourth_far(:,rclose < 1e-14,3) = repmat(0.25*1i*(8*(zk)^4.*snj(:,:,1)-8*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0*0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) - 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,nsub) ;
         fourth_far(:,rclose < 1e-14,4) = 0;
-        fourth_far(:,rclose < 1e-14,5) = 0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
+        fourth_far(:,rclose < 1e-14,5) = repmat(0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,nsub) ;
+        end
 
         fourth(:,iclose,:) = fourth_near + fourth_far;
     end
@@ -687,12 +699,14 @@ if ~isempty(rxclose)
 
         fifth_far = cat(3,fifth_far_xxxxx,fifth_far_xxxxy,fifth_far_xxxyy,fifth_far_xxyyy,fifth_far_xyyyy,fifth_far_yyyyy);
 
-        fifth_far(:,rclose < 1e-14,1) = .5*1i*(120*(zk)^5.*snj(:,:,2)-120*(1i*zk)^5*sni(:,:,2))/(6*2^6) - .5*1i*(120*(zk)^5.*snj(:,:,4)-120*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        if nsub > 0
+        fifth_far(:,rclose < 1e-14,1) = repmat(.5*1i*(120*(zk)^5.*snj(:,:,2)-120*(1i*zk)^5*sni(:,:,2))/(6*2^6) - .5*1i*(120*(zk)^5.*snj(:,:,4)-120*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,nsub);
         fifth_far(:,rclose < 1e-14,2) = 0;
-        fifth_far(:,rclose < 1e-14,3) = .5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(24*(zk)^5.*snj(:,:,4)-24*(1i*zk)^5*sni(:,:,4))/(24*2^5) - .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        fifth_far(:,rclose < 1e-14,3) = repmat(.5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(24*(zk)^5.*snj(:,:,4)-24*(1i*zk)^5*sni(:,:,4))/(24*2^5) - .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,nsub);
         fifth_far(:,rclose < 1e-14,4) = 0;
-        fifth_far(:,rclose < 1e-14,5) = .5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(72*(zk)^5.*snj(:,:,4)-72*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        fifth_far(:,rclose < 1e-14,5) = repmat(.5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(72*(zk)^5.*snj(:,:,4)-72*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,nsub);
         fifth_far(:,rclose < 1e-14,6) = 0;
+        end
 
         fifth(:,iclose,:) = fifth_near + fifth_far;
     end

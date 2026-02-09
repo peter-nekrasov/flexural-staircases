@@ -54,7 +54,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % wtarg = new_geom(targmod.r(1,:),d,A) ;
 % iout = targmod.r(2,:) > wtarg(2,:);
 
-src = []; src.r = [[0;-2],[d/2;1.5]];
+src = []; src.r = [[0;-2],[d/2;3]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
@@ -83,7 +83,7 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 %
 
 ising = 0;
-fkern1 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
 double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
 hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
 opts = [];
@@ -95,7 +95,7 @@ opts2.sing = 'smooth';
 % building system matrix
 
 start = tic;
-sysmat1 = chunkermat(chnkr,fkern1, opts);
+sysmat1 = chunkermat(chnkr,fkern, opts);
 D = chunkermat(chnkr, double, opts);
 H = chunkermat(chnkr, hilbert, opts2);     
 
@@ -104,7 +104,7 @@ D = reshape(D,nkappa,chnkr.npt,chnkr.npt);
 H = reshape(H,nkappa,chnkr.npt,chnkr.npt);
 
 
-fkern1 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate',nu);
+fkern =  @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate',nu);
 double = @(s,t) chnk.lap2d.kern(s,t,'d');
 hilbert = @(s,t) chnk.lap2d.kern(s,t,'hilb');
 
@@ -116,7 +116,7 @@ opts2.sing = 'pv';
 
 % building system matrix
 
-sysmat1_0 = chunkermat(chnkr,fkern1, opts);
+sysmat1_0 = chunkermat(chnkr,fkern, opts);
 D_0 = chunkermat(chnkr, double, opts);
 H_0 = chunkermat(chnkr, hilbert, opts2); 
 
@@ -177,7 +177,7 @@ dens_comb = reshape(dens_comb,[],size(rhs,2));
 
 uin = skern_0(src,targout_0);
 if nkappa == 1
-    uin = exp(1i*kappa(:).*nshift(iout).'*d).*skern(src,targout_0)*ws(1);
+    uin = exp(1i*kappa(:).*nshift(iout).'*d).*skern(src,targout)*ws(1);
 end
 
 uscat = 0*uin;
@@ -221,7 +221,7 @@ utot = uscat+uin;
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
 
-figure(1);clf
+figure(3);clf
 h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
@@ -236,7 +236,7 @@ set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
 % exportgraphics(gcf,'free_acc.pdf','resolution',200)
 % %%
-figure(2);clf
+figure(4);clf
 us(iout) = utot(:,2);
 h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
