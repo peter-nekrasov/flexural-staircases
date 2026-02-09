@@ -86,6 +86,9 @@ plot(ts,imag(hess(:,:,3))); %,ts,imag(u11));
 
 %%
 
+[s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
+[val, grad, hess] = chnk.lap2dquas.green(src.r,targ.r,kappa,d,s0_l,sn_l,l,0);  
+
 % kern =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_smooth',nu);
 % us = kern(src,targ);
 % plot(log10(ts),log10(abs(us))); %,ts,imag(u11));

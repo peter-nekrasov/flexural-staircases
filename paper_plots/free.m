@@ -88,15 +88,18 @@ double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
 hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
 opts = [];
 opts.sing = 'smooth';
+opts.quad = 'native';
 
 opts2 = [];
 opts2.sing = 'smooth';
+opts.quad = 'native';
+
 
 % building system matrix
 
 start = tic;
 sysmat1 = chunkermat(chnkr,fkern, opts);
-D = chunkermat(chnkr, double, opts);
+D = chunkermat(chnkr, double, opts2);
 H = chunkermat(chnkr, hilbert, opts2);     
 
 sysmat1 = reshape(sysmat1,nkappa,4*chnkr.npt,2*chnkr.npt);
@@ -221,7 +224,7 @@ utot = uscat+uin;
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
 
-figure(3);clf
+figure(1);clf
 h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
@@ -236,7 +239,7 @@ set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
 % exportgraphics(gcf,'free_acc.pdf','resolution',200)
 % %%
-figure(4);clf
+figure(2);clf
 us(iout) = utot(:,2);
 h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on

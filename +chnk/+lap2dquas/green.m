@@ -145,6 +145,12 @@ if ~isempty(rxclose)
     
     tmp = reshape(Rns.*cs,[],N);
     val_far = sn(:,:)*tmp.' + s0;
+    
+    nsub = sum(rclose < 1e-14);
+    if nsub > 0
+    val_far(:,rclose < 1e-14) = repmat(s0,1,nsub); % diagonal replacement
+    end
+
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
@@ -158,6 +164,12 @@ if ~isempty(rxclose)
         grad_far_t = ((-reshape((1:N),1,[]).*sn(:,:))*tmp.');
         
         grad_far = cat(3,cs(:,:,1).*grad_far_p - ss(:,:,1).*grad_far_t, ss(:,:,1).*grad_far_p + cs(:,:,1).*grad_far_t);
+        
+        if nsub > 0
+            grad_far(:,rclose < 1e-14,1) = repmat(sn(:,1),1,nsub);
+            grad_far(:,rclose < 1e-14,2) = 0;            
+        end
+        
         grad(:,iclose,:) = grad_near + grad_far; 
     end
     if nargout > 2
@@ -188,6 +200,12 @@ if ~isempty(rxclose)
         hess_far_yy = sn(:,:)*tmp_n(:,:).';
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
+
+        if nsub > 0
+            hess_far(:,rclose < 1e-14,1) = repmat(2*sn(:,2),1,nsub);
+            hess_far(:,rclose < 1e-14,2) = 0; 
+            hess_far(:,rclose < 1e-14,3) = repmat(-2*sn(:,2),1,nsub);            
+        end
 
         hess(:,iclose,:) = hess_near + hess_far;
     end
