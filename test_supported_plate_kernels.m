@@ -71,8 +71,8 @@ err = abs(ref - [k1fd;k2fd])
 
 %% checking bcs
 
-fkern3 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',xi,d,sn,[],[],l,ising,nu);
-fkern4 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',xi,d,sn,[],[],l,ising,nu);
+fkern3 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',xi,d,sn,[],[],l,1,nu);
+fkern4 =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',xi,d,sn,[],[],l,1,nu);
 
 ref = fkern3(src,targ);
 

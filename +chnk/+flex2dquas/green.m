@@ -86,7 +86,7 @@ Lbd = sqrt((log(tol))^2/real(ythresh)^2 + real(zk)^2);
 rxfar = rxfar.';
 ryfar = ryfar.';
 if ~isempty(ryfar)
-M = ceil(Lbd*d/(2*pi));
+M = 2*ceil(Lbd*d/(2*pi));
 ms = reshape((-M:M),1,1,[]);
 xi_m = kappa(:) + 2*pi/d*ms;
 
@@ -262,6 +262,7 @@ if ~isempty(rxclose)
     eip = (rxclose+1i*ryclose)./rclose;
     eipn = reshape(eip.^ns,1,[], N+1);
     cs = (eipn+1./eipn)/2;
+    % cs(isnan(cs)) = 0;
     
     Js = reshape(Js,1,[],N+8);
     Is = reshape(Is,1,[],N+8);
@@ -271,24 +272,30 @@ if ~isempty(rxclose)
     tmpj = reshape(Js(:,:,2:end-7).*cs(:,:,2:end),[],N);
     tmpi = reshape(-Is(:,:,2:end-7).*cs(:,:,2:end),[],N);    
     val_far = 0.25*1i*(Js(:,:,1).*snj(:,:,1)-Is(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
+    val_far(rclose < 1e-14) = 0.25*1i*(snj(:,:,1)-sni(:,:,1)); % diagonal replacement
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
         DJs = cat(3,-Js(:,:,2),.5*(Js(:,:,1:end-8)-Js(:,:,3:end-6)))*zk;
         DIs = cat(3,-Is(:,:,2),.5*(Is(:,:,1:end-8)-Is(:,:,3:end-6)))*1i*zk;
         ss = (eipn-1./eipn)/2i;
+        % ss(isnan(ss)) = 0;
         
         tmpj = reshape(DJs(:,:,2:end).*cs(:,:,2:end),[],N);
         tmpi = reshape(-DIs(:,:,2:end).*cs(:,:,2:end),[],N);
 
         grad_far_p = 0.25*1i*(DJs(:,:,1).*snj(:,:,1)-DIs(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
-        
+
         tmpj = reshape((Js(:,:,2:end-7)).*ss(:,:,2:end),[],N)./rclose;
         tmpi = reshape((-Is(:,:,2:end-7)).*ss(:,:,2:end),[],N)./rclose;
 
         grad_far_t = (0.5*1i*((-reshape((1:N),1,[]).*sni(:,2:end))*tmpi.'))+(0.5*1i*((-reshape((1:N),1,[]).*snj(:,2:end))*tmpj.'));
         
         grad_far = cat(3,cs(:,:,2).*grad_far_p - ss(:,:,2).*grad_far_t, ss(:,:,2).*grad_far_p + cs(:,:,2).*grad_far_t);
+
+        grad_far(:,rclose < 1e-14,1) = 0.25*1i*(zk*snj(:,:,2)-1i*zk*sni(:,:,2));
+        grad_far(:,rclose < 1e-14,2) = 0;
+
         grad(:,iclose,:) = grad_near + grad_far; 
     end
     if nargout > 2
@@ -333,6 +340,10 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
+
+        hess_far(:,rclose < 1e-14,1) = -0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))+.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3));
+        hess_far(:,rclose < 1e-14,2) = 0;
+        hess_far(:,rclose < 1e-14,3) = -0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))-.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3));
 
         hess(:,iclose,:) = hess_near + hess_far;
     end
@@ -400,6 +411,11 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';
 
         third_far = cat(3,third_far_xxx,third_far_xxy,third_far_xyy,third_far_yyy);
+
+        third_far(:,rclose < 1e-14,1) = -.5*1i*(6*(zk)^3.*snj(:,:,2)-6*(1i*zk)^3*sni(:,:,2))/16 + .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48 ;
+        third_far(:,rclose < 1e-14,2) = 0;
+        third_far(:,rclose < 1e-14,3) = -.5*1i*(2*(zk)^3.*snj(:,:,2)-2*(1i*zk)^3*sni(:,:,2))/16 - .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48 ;
+        third_far(:,rclose < 1e-14,4) = 0;
 
         third(:,iclose,:) = third_near + third_far;
     end
@@ -487,6 +503,12 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';        
 
         fourth_far = cat(3,fourth_far_xxxx,fourth_far_xxxy,fourth_far_xxyy,fourth_far_xyyy,fourth_far_yyyy);
+
+        fourth_far(:,rclose < 1e-14,1) = 0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) - 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
+        fourth_far(:,rclose < 1e-14,2) = 0;
+        fourth_far(:,rclose < 1e-14,3) = 0.25*1i*(8*(zk)^4.*snj(:,:,1)-8*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0*0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) - 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
+        fourth_far(:,rclose < 1e-14,4) = 0;
+        fourth_far(:,rclose < 1e-14,5) = 0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24) ;
 
         fourth(:,iclose,:) = fourth_near + fourth_far;
     end
@@ -664,6 +686,13 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';   
 
         fifth_far = cat(3,fifth_far_xxxxx,fifth_far_xxxxy,fifth_far_xxxyy,fifth_far_xxyyy,fifth_far_xyyyy,fifth_far_yyyyy);
+
+        fifth_far(:,rclose < 1e-14,1) = .5*1i*(120*(zk)^5.*snj(:,:,2)-120*(1i*zk)^5*sni(:,:,2))/(6*2^6) - .5*1i*(120*(zk)^5.*snj(:,:,4)-120*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        fifth_far(:,rclose < 1e-14,2) = 0;
+        fifth_far(:,rclose < 1e-14,3) = .5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(24*(zk)^5.*snj(:,:,4)-24*(1i*zk)^5*sni(:,:,4))/(24*2^5) - .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        fifth_far(:,rclose < 1e-14,4) = 0;
+        fifth_far(:,rclose < 1e-14,5) = .5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(72*(zk)^5.*snj(:,:,4)-72*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5);
+        fifth_far(:,rclose < 1e-14,6) = 0;
 
         fifth(:,iclose,:) = fifth_near + fifth_far;
     end
