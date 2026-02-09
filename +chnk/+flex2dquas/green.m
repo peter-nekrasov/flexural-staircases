@@ -86,7 +86,7 @@ Lbd = sqrt((log(tol))^2/real(ythresh)^2 + real(zk)^2);
 rxfar = rxfar.';
 ryfar = ryfar.';
 if ~isempty(ryfar)
-M = 2*ceil(Lbd*d/(2*pi));
+M = ceil(Lbd*d/(2*pi));
 ms = reshape((-M:M),1,1,[]);
 xi_m = kappa(:) + 2*pi/d*ms;
 

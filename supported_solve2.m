@@ -4,7 +4,7 @@ nu = 0.3;
 
 kappa = 0.3+0.3*1i;
 
-nplot = 40;
+nplot = 50;
 xx = linspace(-1.5*d, 1.5*d,nplot);
 yy = xx;
 [X,Y] = meshgrid(xx,yy);
@@ -125,7 +125,7 @@ scatter(src.r(1,:),src.r(2,:))
 h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
 colorbar
 hold off
-axis equal
+xlim([-1.5*d,1.5*d])
 
 
 
