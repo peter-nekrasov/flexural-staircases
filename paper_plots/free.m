@@ -1,8 +1,8 @@
 %%
 addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
-zk = 1.2;
-zk = 7;
+% zk = 1.2;
+% zk = 7;
 % d = 1.2;
 d = 2;
 nu = 0.3; 
@@ -17,7 +17,7 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-% kappa = kappa(1); ws = ws(1); ws = 1;
+kappa = kappa(1); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
 
@@ -54,7 +54,8 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % wtarg = new_geom(targmod.r(1,:),d,A) ;
 % iout = targmod.r(2,:) > wtarg(2,:);
 
-src = []; src.r = [[0;-2],[d/2;1.5]];
+src = []; src.r = [[0;-2],[d/2;3]];
+% src = []; src.r = [[0;-2],[d/2;1.5]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
@@ -177,7 +178,7 @@ dens_comb = reshape(dens_comb,[],size(rhs,2));
 
 uin = skern_0(src,targout_0);
 if nkappa == 1
-    uin = exp(1i*kappa(:).*nshift(iout).'*d).*skern(src,targout_0)*ws(1);
+    uin = exp(1i*kappa(:).*nshift(iout).'*d).*skern(src,targout)*ws(1);
 end
 
 uscat = 0*uin;
