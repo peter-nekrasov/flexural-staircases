@@ -1,5 +1,5 @@
 %%
-addpath(genpath('../../flexural-staircases'))
+% addpath(genpath('../../flexural-staircases'))
 zk = 0.8;
 % zk = 1.2;
 % zk = 7;
@@ -54,7 +54,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % wtarg = new_geom(targmod.r(1,:),d,A) ;
 % iout = targmod.r(2,:) > wtarg(2,:);
 
-src = []; src.r = [[0;-2],[d/2;3]];
+src = []; src.r = [[0;-2],[d/2;7]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 % src.r = [0;-2];
 
@@ -241,7 +241,7 @@ set(c,'TickLabelInterpreter','latex');
 % %%
 figure(2);clf
 us(iout) = utot(:,2);
-h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,2),src.r(2,2),400,'r.')
 plot(chnkrs,'k.','markersize',15)

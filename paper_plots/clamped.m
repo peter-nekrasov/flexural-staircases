@@ -1,8 +1,8 @@
 %%
-addpath(genpath('../../flexural-staircases'))
-zk = 2;
-
-zk = 1.2;
+% addpath(genpath('../../flexural-staircases'))
+% zk = 2;
+% zk = 1.2;
+zk = 3.6;
 
 nnode = 61;
 ts = linspace(-pi/d,pi/d,nnode);
@@ -21,7 +21,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-nplot = 60;
+% nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -141,37 +141,51 @@ chnkrs = merge(chnkrs);
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
 
-figure(1);clf
-h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
+f1=figure(1);clf
+f1.Position = [1 1 643 441];
+C = reshape(log10(abs(us)/norm(uin(:,1),inf)), size(X)); 
+h = pcolor(X,Y,C);
+set(gca,'Color','w')
+h.EdgeColor = 'None'; 
+h.FaceColor = 'texturemap'; 
+h.AlphaData = ~isnan(C);
+h.FaceAlpha = 'texturemap';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
-plot(chnkrs,'k.','markersize',15)
+plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-set(gca,'FontSize',18)
+vv = sort(abs(C(:)));
+clim([min(C(:)),-vv(3)])
+set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'clamp_acc.pdf','resolution',200)
+% exportgraphics(f1,'clamped_acc.pdf','ContentType','vector','Resolution',300);
 % %%
-figure(2);clf
+f2=figure(2);clf
+f2.Position = [1 1 643 441];
 us(iout) = utot(:,2);
-% h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
-h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
+C = reshape((imag(us)),size(X));
+h = pcolor(X,Y,C);
+h.EdgeColor = 'None'; 
+h.FaceColor = 'texturemap'; 
+h.AlphaData = ~isnan(C);
+h.FaceAlpha = 'texturemap';
 hold on
-scatter(src.r(1,2),src.r(2,2),400,'r.')
-plot(chnkrs,'k.','markersize',15)
+scatter(src.r(1,2),src.r(2,2),300,'r.')
+plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-set(gca,'FontSize',18)
+set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'clamp_sol.pdf','resolution',200)
+% exportgraphics(f2,'clamped_sol.pdf','ContentType','vector','Resolution',300);
 
 
 function [r,d,d2] = cos_func(t,d,A)

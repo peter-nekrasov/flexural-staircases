@@ -1,17 +1,18 @@
 d = 2;
-zk = 1;
+zk = 3.6;
 
 
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+cparams.eps = 1e-10;
 cparams.maxchunklen = 2/zk;cparams.ifclosed = 0;
-nch = 20; A = -1;
+nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 chnkr1 = reverse(chnkr0);
 
-
-chnkr2 = chunkerfunc(@starfish,struct('eps',1e-10)); 
+cparams = []; cparams.eps = 1e-10; cparams.maxchunklen = 2/zk;
+chnkr2 = chunkerfunc(@(t) starfish(t,3),cparams); 
 chnkr2 = move(chnkr2,[], [0;2.5],0.3,0.5);
 src = []; src.r = [0;0]; src.n = [1;0];
 
@@ -40,4 +41,4 @@ hold on
 plot(chnkr,'.','linewidth',2)
 hold off
 ylim([-1.5,inf])
-% axis equal
+axis equal
