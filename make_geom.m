@@ -1,8 +1,6 @@
 d = 2;
 zk = 1;
 
-
-
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.maxchunklen = 2/zk;cparams.ifclosed = 0;
 nch = 20; A = -1;
