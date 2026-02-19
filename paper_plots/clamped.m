@@ -85,6 +85,7 @@ rhs = -bskern(src,chnkr);
 sol = 0*rhs;
 for i = 1:nkappa
 sol(i:nkappa:end,:) = (squeeze(sys(i,:,:))\rhs(i:nkappa:end,:))*ws(i);
+cond(squeeze(sys(i,:,:)))
 end
 
 %%

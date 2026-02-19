@@ -9,7 +9,8 @@ nch = 20; A = -0.5;
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 chnkr1 = reverse(chnkr0);
 
-cparams = []; cparams.eps = 1e-10; cparams.maxchunklen = 2/zk;
+cparams = rmfield(cparams,'ta');
+cparams = rmfield(cparams,'tb');
 chnkr2 = chunkerfunc(@(t) starfish(t,3),cparams); 
 chnkr2 = move(chnkr2,[], [0;2.5],0.3,0.5);
 src = []; src.r = [0;0]; src.n = [1;0];
@@ -20,6 +21,7 @@ figure(1);clf
 plot(chnkr,'linewidth',2)
 axis equal
 
+chnkr.npt
 
 rend = chunkends(chnkr,[1,chnkr1.nch]);
 rend = rend(:,[2,3]);

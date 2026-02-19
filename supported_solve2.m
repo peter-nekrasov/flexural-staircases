@@ -1,13 +1,16 @@
-zk = 1;
+% zk = 1;
 d = 1.2;
 d = 2;
 nu = 0.3;
 
-kappa = 0.3+0.3*1i;
+kappa = -0.3+0.3*1i;
+kappa = 0;
+kappa =  -1.494172115731731 + 0.045794785265662i;
 
 nplot = 50;
-xx = linspace(-1.5*d, 1.5*d,nplot);
+xx = linspace(-d/2,d/2,nplot);
 yy = xx;
+yy = linspace(0, 6*d,3*nplot/3) - 1.2;
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
 
@@ -129,7 +132,7 @@ quiver(chnkr)
 hold on
 plot(chnkrs,'k.')
 scatter(src.r(1,:),src.r(2,:))
-h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:),inf)),size(X))); h.EdgeColor = 'None';
 colorbar
 hold off
 xlim([-1.5*d,1.5*d])
