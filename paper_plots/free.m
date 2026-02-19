@@ -27,6 +27,7 @@ nkappa = length(kappa);
 
 nplot = 240;
 % nplot = 60;
+nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -58,6 +59,8 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
 src = []; src.r = [[0;-2],[d/2;1.5]];
 % src = []; src.r = [[0;-2],[d/2;1]];
+src = []; src.r = [[0;-2],[d/2;7]];
+src = []; src.r = [[0;2.5],[d/2;1.5]];
 % src.r = [0;-2];
 
 chnkrs = [];
@@ -253,12 +256,14 @@ set(c,'TickLabelInterpreter','latex');
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
 us(iout) = utot(:,2);
+
 C = reshape((imag(us)),size(X));
 h = pcolor(X,Y,C);
 h.EdgeColor = 'None'; 
 h.FaceColor = 'texturemap'; 
 h.AlphaData = ~isnan(C);
 h.FaceAlpha = 'texturemap';
+h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,2),src.r(2,2),300,'r.')
 plot(chnkrs,'k-','LineWidth',2.5)
