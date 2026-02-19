@@ -17,14 +17,14 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-kappa = kappa(1); ws = ws(1); ws = 1;
+% kappa = kappa(1); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
 
 %%
 
 nplot = 240;
-nplot = 60;
+nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/4) - 1.2;
@@ -55,7 +55,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 % iout = targmod.r(2,:) > wtarg(2,:);
 
 src = []; src.r = [[0;-2],[d/2;7]];
-% src = []; src.r = [[0;-2],[d/2;1]];
+src = []; src.r = [[0;2.5],[d/2;1.5]];
 % src.r = [0;-2];
 
 chnkrs = [];
@@ -241,7 +241,7 @@ set(c,'TickLabelInterpreter','latex');
 % %%
 figure(2);clf
 us(iout) = utot(:,2);
-h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
+h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,2),src.r(2,2),400,'r.')
 plot(chnkrs,'k.','markersize',15)
