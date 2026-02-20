@@ -59,7 +59,7 @@ chnkr.data(2,:,:) = kpp;
 %%
 
 nplot = 240;
-% nplot = 60;
+nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
