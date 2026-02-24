@@ -4,7 +4,7 @@
 % zk = 1.2;
 zk = 3.6;
 zk = 7;
-nnode = 61;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -135,7 +135,7 @@ utot = uscat+uin;
 %%
 chnkrs = [];
 for i = -4:4
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 
@@ -164,7 +164,7 @@ clim([min(C(:)),-vv(3)])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(f1,'clamped_acc.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f1,'clamped_acc.pdf','ContentType','vector','Resolution',300);
 % %%
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
@@ -186,7 +186,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(f2,'clamped_sol.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f2,'clamped_sol.pdf','ContentType','vector','Resolution',300);
 
 
 function [r,d,d2] = cos_func(t,d,A)
