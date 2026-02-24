@@ -133,11 +133,11 @@ utot = uscat+uin;
 
 
 %%
-chnkrs = [];
-for i = -4:4
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
-end
-chnkrs = merge(chnkrs);
+% chnkrs = [];
+% for i = -4:4
+%     chnkrs = [chnkrs, chnkr + [i*d;0]];
+% end
+% chnkrs = merge(chnkrs);
 
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);

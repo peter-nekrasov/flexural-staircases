@@ -263,7 +263,6 @@ h.EdgeColor = 'None';
 h.FaceColor = 'texturemap'; 
 h.AlphaData = ~isnan(C);
 h.FaceAlpha = 'texturemap';
-h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,2),src.r(2,2),300,'r.')
 plot(chnkrs,'k-','LineWidth',2.5)
