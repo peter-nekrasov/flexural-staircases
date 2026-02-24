@@ -27,7 +27,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-nplot = 60;
+% nplot = 60;
 % nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
@@ -88,10 +88,14 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 [s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
 %
 
+alpha = reshape(exp(1i*kappa(:)*d),[nkappa,1,1]); 
 ising = 0;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu);
-double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising);
-hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising);
+
+
+nsub = 1;
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu,nsub);
+double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising,nsub);
+hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising,nsub);
 opts = [];
 opts.sing = 'smooth';
 opts.quad = 'native';
@@ -132,6 +136,23 @@ H_0 = chunkermat(chnkr, hilbert, opts2);
 sysmat1_0 = reshape(sysmat1_0,1,4*chnkr.npt,2*chnkr.npt);
 D_0 = reshape(D_0,1,chnkr.npt,chnkr.npt);
 H_0 = reshape(H_0,1,chnkr.npt,chnkr.npt);
+
+for ii = -nsub:nsub
+    if ii ~= 0 
+        Hsub = chunkerkernevalmat(chnkr + ii*[d;0],hilbert,chnkr);
+        Dsub = chunkerkernevalmat(chnkr + ii*[d;0],double,chnkr);
+        sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern,chnkr);
+  
+        Hsub = reshape(Hsub,[1,chnkr.npt,chnkr.npt]);
+        Dsub = reshape(Dsub,[1,chnkr.npt,chnkr.npt]);
+        sub = reshape(sub,[1,4*chnkr.npt,2*chnkr.npt]);
+
+        H_0 = H_0 + alpha.^(ii).*Hsub;
+        D_0 = D_0 + alpha.^(ii).*Dsub;
+        sysmat1_0 = sysmat1_0 + alpha.^(ii).*sub;
+
+    end
+end
 
 sysmat1 = sysmat1 + sysmat1_0; D = D + D_0; H = H + H_0;
 

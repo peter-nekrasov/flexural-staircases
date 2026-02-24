@@ -465,7 +465,13 @@ case {'free_plate'}
    targd2 = targinfo.d2;
    nu = varargin{1};
 
-   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+   if length(varargin) > 1
+        nsub = varargin{2};
+   else
+        nsub = 0;
+   end
+
+   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0,nsub);  
 
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
@@ -509,8 +515,8 @@ case {'free_plate'}
 
    kappatarg = numer ./ denom; % target curvature
 
-   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,s0_l,sn_l,l,0);
-   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,s0_l,sn_l,l,0);
+   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,s0_l,sn_l,l,0,nsub);
+   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,s0_l,sn_l,l,0,nsub);
    hilb = (1+nu) * hilb / 2;
    hilbp = (1+nu) * hilbp / 2;
    

@@ -63,7 +63,7 @@ case {'hilb'}
 case {'hilbprime'} 
     srcnorm = srcinfo.n;
     targnorm = targinfo.n;
-    [~,~,hess] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising);
+    [~,~,hess] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising,nsub);
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
     nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);
