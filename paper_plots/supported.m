@@ -1,9 +1,10 @@
 d = 2;
 zk = 3.6;
+zk = 1.2;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 1/zk;cparams.ifclosed = 0;
+cparams.maxchunklen = 1/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
@@ -35,7 +36,7 @@ cgrph = chunkgraph(verts,edge2verts,fchnk);
 
 nu = 0.3; 
 
-nnode = 61;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -45,7 +46,7 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-% kappa = kappa(10); ws = ws(1); ws = 1;
+kappa = kappa(10); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
 chnkr = makedatarows(chnkr,2);
@@ -235,7 +236,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f1,'supported_acc.pdf','ContentType','vector','Resolution',300);
+% exportgraphics(f1,'supported_acc.pdf','ContentType','vector','Resolution',300);
 % %%
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
@@ -257,7 +258,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
+% exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
 
 
 function [r,d,d2] = cos_func(t,d,A)

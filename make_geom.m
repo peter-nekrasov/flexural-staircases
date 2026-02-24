@@ -3,7 +3,7 @@ zk = 3.6;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 2/zk;cparams.ifclosed = 0;
+cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);

@@ -1,5 +1,7 @@
 zks = [1.180964293688935];
 kappas = pi/d;
+zks = 3.6;
+kappas  =   2.682434068482174 - 2*pi/d;
 nu = 0.3;
 
 nplot = 200;
@@ -31,7 +33,7 @@ for j = 1:length(zks)
 
 zk = real(zks(j)); kappa_rt = kappas(end); nkappa = 1;
 if nkappa == 0, return, end
-nkappa = length(kappa);
+nkappa = length(kappa_rt);
 chnkr = makedatarows(chnkr,2);
 curv = signed_curvature(chnkr);
 kp = arclengthder(chnkr,curv);
@@ -42,10 +44,10 @@ chnkr.data(2,:,:) = kpp;
 
 
 l=2; N = 40; a = 15; M = 1e4;
-sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
+sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa_rt,(exp(1i*kappa_rt*d)),a,M,l+1);
 
 ising = 0;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu);
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa_rt,d,sn,[],[],l,ising,nu);
 
 opts2 = [];
 opts2.quad = 'native';
@@ -82,14 +84,14 @@ dens = v(:,end);
 sig(end,end)/sig(1,1)
 %%
 
-skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa_rt,d,sn,s0_l,sn_l,l,1);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa_rt,d,sn,s0_l,sn_l,l,1,nu);
+skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa_rt,d,sn,[],[],l,1);
+% bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa_rt,d,sn,s0_l,sn_l,l,1,nu);
 
 % Solving linear system
 sol = dens;
 
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa_rt,d,sn,[],[],l,0,nu);
 ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_eval',nu);
 
 wts = repmat(chnkr.wts(:).',2,1);
