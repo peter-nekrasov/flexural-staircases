@@ -28,6 +28,7 @@ fchnk{5} = chnkr2;
 cgrph = chunkgraph(verts,edge2verts,fchnk);
 
 cparams.ifclosed = 0;
+ cparams.ta = -d/2; cparams.tb = d/2;
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
 
 chnkr = merge([chnkr1, chnkr2]);
@@ -260,7 +261,7 @@ clim([min(C(:)),-vv(3)])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(f1,'supported_acc.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f1,'supported_acc.pdf','ContentType','vector','Resolution',300);
 % %%
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
@@ -282,7 +283,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
 
 load('gong.mat')
 sound(y)

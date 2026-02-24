@@ -4,7 +4,7 @@
 % zk = 1.2;
 zk = 3.6;
 zk = 7;
-nnode = 61;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -133,11 +133,12 @@ utot = uscat+uin;
 
 
 %%
-% chnkrs = [];
-% for i = -4:4
-%     chnkrs = [chnkrs, chnkr + [i*d;0]];
-% end
-% chnkrs = merge(chnkrs);
+
+chnkrs = [];
+for i = -4:4
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
+end
+chnkrs = merge(chnkrs);
 
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
