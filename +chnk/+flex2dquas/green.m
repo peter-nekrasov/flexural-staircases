@@ -1,4 +1,4 @@
-function [val,grad,hess,third,fourth,fifth,sixth] = green(src,targ,zk,kappa,d,sn,l,ising)
+function [val,grad,hess,third,fourth,fifth,sixth] = green(src,targ,zk,kappa,d,sn,l,ising,nsub)
 %CHNK.FLEX2DQUAS.GREEN evaluate the quasiperiodic flexural Green's function
 % for the given sources and targets
 %
@@ -59,6 +59,12 @@ nxclose = nx(iclose);
 nptclose = size(rxclose, 1);
 
 nkappa = length(kappa);
+
+if nargin < 9
+    nsub = 0;
+elseif nsub > l
+    error('trying to subtract off too many copies')
+end
 
 val = zeros(nkappa,npt,1);
 if nargout > 1
@@ -164,7 +170,7 @@ if ~isempty(rxclose)
         if ising == 1
             iuse = true(nptclose,1);
         else
-            iuse = nxclose ~= -i;
+            iuse = ~ismember(nxclose, -i-nsub:-i+nsub); 
         end
 
         rxi = rxclose - i*d;
@@ -940,13 +946,15 @@ quasi_phase = exp(1i*kappa(:)*nx(:).'*d);
 if nargout == 1
     val = quasi_phase.*val;
 
-    if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+    if ising == 0 % return to this 
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        vali = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).'+ nx(isub).'*d;ry(isub).']);
+        vali = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).'+ (nx(isub).' - ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
-        val(:,isub,:) = val(:,isub,:) - vali;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        end
         end
     end
 

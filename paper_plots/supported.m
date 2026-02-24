@@ -1,10 +1,9 @@
 d = 2;
-zk = 3.6;
-zk = 1.2;
+zk = 1;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 1/zk;cparams.ifclosed = 1;
+cparams.maxchunklen = 0.25/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
@@ -46,7 +45,8 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-kappa = kappa(10); ws = ws(1); ws = 1;
+kappa = pi/d + 1e-1; ws = 1;
+% kappa = kappa(10); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
 chnkr = makedatarows(chnkr,2);
@@ -226,7 +226,8 @@ hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
 plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
-c.Ticks = floor(c.Limits(1)) : ceil(c.Limits(2));
+% clim([1e-6 1e-5])
+% c.Ticks = floor(c.Limits(1)) : ceil(c.Limits(2));
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
@@ -260,6 +261,8 @@ set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
 % exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
 
+load('gong.mat')
+sound(y)
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
