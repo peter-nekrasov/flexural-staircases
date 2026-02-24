@@ -3,7 +3,7 @@
 % zk = 2;
 % zk = 1.2;
 zk = 3.6;
-
+zk = 7;
 nnode = 61;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
@@ -40,7 +40,7 @@ src = []; src.r = [[0;-2],[d/2;1.5]];
 
 chnkrs = [];
 for i = (-6:6)
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 % iout = ~chunkerinterior(chnkrs,targ);
