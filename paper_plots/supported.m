@@ -16,12 +16,6 @@ chnkr2 = move(chnkr2,[], [0;2.5],0.3,0.5);
 src = []; src.r = [0;0]; src.n = [1;0];
 
 
-chnkr = merge([chnkr1, chnkr2]);
-figure(1);clf
-plot(chnkr,'linewidth',2)
-axis equal
-
-chnkr.npt
 
 rend = chunkends(chnkr,[1,chnkr1.nch]);
 rend = rend(:,[2,3]);
@@ -32,6 +26,16 @@ fchnk = cell(1,5);
 fchnk{1} = chnkr0;
 fchnk{5} = chnkr2;
 cgrph = chunkgraph(verts,edge2verts,fchnk);
+
+cparams.ifclosed = 0;
+chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+
+chnkr = merge([chnkr1, chnkr2]);
+chnkrplot = merge([chnkr0, chnkr2]);
+figure(1);clf
+plot(chnkrplot,'linewidth',2)
+axis equal
+chnkr.npt
 
 nu = 0.3; 
 
@@ -96,7 +100,7 @@ src = []; src.r = [[0;-2],[d/2;1.5]];
 
 chnkrs = [];
 for i = (-6:6)
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 % iout = ~chunkerinterior(chnkrs,targ);
