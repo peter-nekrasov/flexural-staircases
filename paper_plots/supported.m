@@ -3,7 +3,7 @@ zk = 1;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 0.25/zk;cparams.ifclosed = 0;
+cparams.maxchunklen = 0.25/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
@@ -35,7 +35,7 @@ cgrph = chunkgraph(verts,edge2verts,fchnk);
 
 nu = 0.3; 
 
-nnode = 61;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -60,7 +60,7 @@ chnkr.data(2,:,:) = kpp;
 %%
 
 nplot = 240;
-% nplot = 60;
+nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
