@@ -3,7 +3,7 @@ zk = 1;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 0.25/zk;cparams.ifclosed = 1;
+cparams.maxchunklen = 4/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
@@ -118,8 +118,11 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 [s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
 %
 
+alpha = exp(1i*kappa*d); 
+nsub = 1;
+
 ising = 0;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu);
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu,nsub);
 
 opts2 = [];
 opts2.quad = 'native';
@@ -139,6 +142,13 @@ opts.sing = 'log';
 
 M = chunkermat(chnkr,fkern_0l, opts);
 M2 = chunkermat(chnkr,fkern_0s, opts2);
+
+for ii = -nsub:nsub
+    if ii ~= 0 
+        M = M + alpha.^(ii).*chunkerkernevalmat(chnkr + ii*[d;0],fkern_0l,chnkr);
+        M2 = M2 + alpha.^(ii).*chunkerkernevalmat(chnkr + ii*[d;0],fkern_0s,chnkr,struct('forcesmooth',true));
+    end
+end
 
 c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
 
