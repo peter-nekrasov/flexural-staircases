@@ -45,7 +45,7 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-kappa = pi/d + 1e-1; ws = 1;
+% kappa = pi/d + 1e-1; ws = 1;
 % kappa = kappa(10); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
@@ -118,7 +118,7 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 [s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,kappa,l);
 %
 
-alpha = exp(1i*kappa*d); 
+alpha = reshape(exp(1i*kappa(:)*d),[nkappa,1,1]); 
 nsub = 1;
 
 ising = 0;
@@ -140,21 +140,31 @@ fkern_0s =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_smooth',nu);     
 opts = [];
 opts.sing = 'log';
 
+c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
+
 M = chunkermat(chnkr,fkern_0l, opts);
 M2 = chunkermat(chnkr,fkern_0s, opts2);
 
+M = M - 0.5*eye(2*chnkr.npt);
+M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + c0.*curv(:).^2.*eye(chnkr.npt) - 0*eye(chnkr.npt); % extra term shows up for the general problem
+
+M = reshape(M,1,2*chnkr.npt,2*chnkr.npt);
+M2 = reshape(M2,1,chnkr.npt,chnkr.npt);
+
 for ii = -nsub:nsub
     if ii ~= 0 
-        M = M + alpha.^(ii).*chunkerkernevalmat(chnkr + ii*[d;0],fkern_0l,chnkr);
-        M2 = M2 + alpha.^(ii).*chunkerkernevalmat(chnkr + ii*[d;0],fkern_0s,chnkr,struct('forcesmooth',true));
+        Msub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0l,chnkr);
+        M2sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0s,chnkr,struct('forcesmooth',true));
+  
+        Msub = reshape(Msub,[1,2*chnkr.npt,2*chnkr.npt]);
+        M2sub = reshape(M2sub,[1,chnkr.npt,chnkr.npt]);
+
+        M = M + alpha.^(ii).*Msub;
+        M2 = M2 + alpha.^(ii).*M2sub;
     end
 end
 
-c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
-
-M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + M2 + c0.*curv(:).^2.*eye(chnkr.npt) - 0*eye(chnkr.npt); % extra term shows up for the general problem
-M = M - 0.5*eye(2*chnkr.npt);
-M = reshape(M,1,2*chnkr.npt,2*chnkr.npt);
+M(:,2:2:end,1:2:end) = M(:,2:2:end,1:2:end) + M2 ; % extra term shows up for the general problem
 
 sys = M3 + M;
 
