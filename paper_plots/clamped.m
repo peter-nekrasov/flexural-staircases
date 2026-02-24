@@ -56,8 +56,12 @@ l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 
 %%
-ising = 1;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising);
+ising = 0;
+nsub = 1;
+alpha = reshape(exp(1i*kappa(:)*d),[nkappa,1,1]); 
+
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising,nsub);
+fkern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate');           % build the desired kernel
 
 curv = signed_curvature(chnkr);
 curv = curv(:);
@@ -65,15 +69,32 @@ curv = curv(:);
 opts = [];
 opts.sing = 'log';
 
+opts2 = [];
+opts2.quad = 'native';
+opts2.sing = 'smooth';
+
 start = tic;
-sys = chunkermat(chnkr,fkern, opts);
+sys = chunkermat(chnkr,fkern, opts2);
 sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
 
-sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
+sys_0 = chunkermat(chnkr,fkern_0, opts);
+sys_0 = reshape(sys_0,[1 size(sys_0)]);
+
+for ii = -nsub:nsub
+    if ii ~= 0 
+        sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0,chnkr);
+  
+        sub = reshape(sub,[1,2*chnkr.npt,2*chnkr.npt]);
+
+        sys_0 = sys_0 + alpha.^(ii).*sub;
+    end
+end
+
+sys = sys + sys_0 - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
 sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
 toc(start)
 %%
-
+ising = 1;
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,[],[],l,ising);
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,[],[],l,ising);
 

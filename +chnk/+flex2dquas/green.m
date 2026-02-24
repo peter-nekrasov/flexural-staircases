@@ -946,7 +946,7 @@ quasi_phase = exp(1i*kappa(:)*nx(:).'*d);
 if nargout == 1
     val = quasi_phase.*val;
 
-    if ising == 0 % return to this 
+    if ising == 0 
         for ii = -nsub:nsub
         isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 

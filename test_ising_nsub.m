@@ -40,3 +40,29 @@ end
 
 figure(1);clf
 h = pcolor(X,Y,reshape(log10(abs(sixth_ref(:,:,1) - sixth(:,:,1)) ./ max(abs(fifth(:)))),size(X))); h.EdgeColor = 'None'; colorbar
+
+%%
+
+l=2; N = 40; a = 15; M = 1e4;
+[s0_l,sn_l] = chnk.lap2dquas.latticecoefs((1:N),d,xi,l);
+
+alpha = exp(1i*xi*d);
+
+[val_ref,grad_ref,hess_ref] = chnk.lap2dquas.green(src2,targ2,xi,d,s0_l,sn_l,l,1);
+
+nsub = 1;
+[val,grad,hess] = chnk.lap2dquas.green(src2,targ2,xi,d,s0_l,sn_l,l,0,nsub);
+
+
+for ii = -nsub:nsub
+
+[val0,grad0,hess0] = chnk.lap2d.green(src2+ii*[d;0],targ2);
+
+val = val + alpha.^ii.*val0;
+grad = grad + alpha.^ii.*grad0;
+hess = hess + alpha.^ii.*hess0;
+
+end
+
+figure(1);clf
+h = pcolor(X,Y,reshape(log10(abs(hess_ref(:,:,1) - hess(:,:,1)) ./ max(abs(fifth(:)))),size(X))); h.EdgeColor = 'None'; colorbar

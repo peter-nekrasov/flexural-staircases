@@ -117,8 +117,14 @@ case {'clamped_plate'}
     nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
     nytarg = reshape(nytarg,[],ns);
 
+    if length(varargin) > 0
+        nsub = varargin{1};
+    else 
+        nsub = 0;
+    end
+
    
-   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0,nsub);  
    
    dx = repmat(srctang(1,:),nkappa*nt,1);
    dy = repmat(srctang(2,:),nkappa*nt,1);

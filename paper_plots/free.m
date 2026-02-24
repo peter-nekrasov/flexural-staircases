@@ -27,7 +27,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-% nplot = 60;
+nplot = 60;
 % nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
