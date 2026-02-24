@@ -9,6 +9,7 @@ zk = 7;
 d = 2;
 nu = 0.3; 
 
+
 nnode = 62; %nnode = 42;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
@@ -27,7 +28,7 @@ nkappa = length(kappa);
 
 nplot = 240;
 % nplot = 60;
-nplot = 120;
+% nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -60,7 +61,7 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 src = []; src.r = [[0;-2],[d/2;1.5]];
 % src = []; src.r = [[0;-2],[d/2;1]];
 src = []; src.r = [[0;-2],[d/2;7]];
-src = []; src.r = [[0;2.5],[d/2;1.5]];
+src = []; src.r = [[0;-2],[d/2;1.5]];
 % src.r = [0;-2];
 
 chnkrs = [];

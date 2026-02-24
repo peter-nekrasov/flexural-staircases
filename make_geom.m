@@ -1,5 +1,5 @@
 d = 2;
-zk = 3.6;
+zk = 7;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;

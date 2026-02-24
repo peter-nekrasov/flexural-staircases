@@ -3,7 +3,7 @@ zk = 7;
 
 cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
 cparams.eps = 1e-10;
-cparams.maxchunklen = 4/zk;cparams.ifclosed = 1;
+cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;
 nch = 20; A = -0.5;
 % chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
 chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
@@ -242,7 +242,6 @@ f1=figure(1);clf
 f1.Position = [1 1 643 441];
 C = reshape(log10(abs(us)/norm(uin(:,1),inf)), size(X)); 
 h = pcolor(X,Y,C);
-set(gca,'Color','w')
 h.EdgeColor = 'None'; 
 h.FaceColor = 'texturemap'; 
 h.AlphaData = ~isnan(C);
@@ -257,8 +256,8 @@ hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-% vv = sort(abs(C(:)));
-% clim([min(C(:)),-7])
+vv = sort(abs(C(:)));
+clim([min(C(:)),-vv(3)])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
