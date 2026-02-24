@@ -5,7 +5,7 @@
 % zk = 7;
 % d = 1.2;
 
-zk = 3.6;
+zk = 7;
 d = 2;
 nu = 0.3; 
 
@@ -65,7 +65,7 @@ src = []; src.r = [[0;2.5],[d/2;1.5]];
 
 chnkrs = [];
 for i = (-6:6)
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 % iout = ~chunkerinterior(chnkrs,targ);
