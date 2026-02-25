@@ -1,17 +1,25 @@
-ifacc = 0;
+ifacc = 1;
 d_l = 2;
 d_r = 2;
 
-% chnkr_l0 = chunkerfunc(@(t) starfish(t,3,0));
-% chnkr_l0 = 0.5*chnkr_l0;
-% chnkr_l = chnkr_l0+ [-d_l/2;0.8];
-% chnkr_l = merge([chnkr_l0+ [-d_l/2;0.8],chnkr_l0+ [-d_l/2;-0.8]]);
-chnkr_l = merge([chnkr_l0+ [0;0.8],chnkr_l0+ [0;-0.8]]);
+cparams = []; cparams.eps = 1e-8;
 
+chnkr_l0 = chunkerfunc(@(t) starfish(t,3),cparams);
+chnkr_l0 = chunkerfunc(@(t) starfish(t,3,0.),cparams);
+chnkr_l0 = 0.4*chnkr_l0;
+chnkr_l = chnkr_l0+ [-d_l/2;0];
+% chnkr_l = merge([chnkr_l0+ [-d_l/2;1.5],chnkr_l0+ [-d_l/2;-1.5]]);
+% chnkr_l = merge([chnkr_l0+ [0;0.8],chnkr_l0+ [0;-0.8]]);
+
+% chnkr_l= -2*[1,0;0,2]*chunkerfunc(@(t) cavity(t,4),cparams) + [0.8;0];
+
+% chnkr_l = [1,0;0,2]*chnkr_l;
 cgrph_l = tochunkgraph(chnkr_l);
 
+chnkr_r= -2*[1,0;0,1]*chunkerfunc(@(t) cavity(t,5),cparams) + [d_r/3;0];
+% chnkr_r= 0.5*chunkerfunc(@(t) starfish(t,3,0),cparams) + [d_r/2;0];
 % 
-% chnkr_r = chunkerfunc(@(t) starfish(t,5,0));
+% chnkr_r = chunkerfunc(@(t) starfish(t,3,0));
 % chnkr_r = 0.5*chnkr_r;
 % chnkr_r = chnkr_r+ [-d_r/2;-0.8];
 % % chnkr_r = merge([chnkr_r+ [-d_r/2;0.8],chnkr_r+ [-d_r/2;-0.8]]);
@@ -64,7 +72,7 @@ cparams.tb = xmax;
 cparams.ifclosed = 0;
 chnkr_tr = chunkerfuncuni(f, nch, cparams);
 for i = 1:2
-    isplit = find(abs(min(chnkr_tr.r(1,:,:))) < 2);
+    isplit = find(abs(min(chnkr_tr.r(1,:,:))) < 4);
 chnkr_tr = refine(chnkr_tr,struct('splitchunks',isplit(:).')); nch = nch+length(isplit);
 chnkr_tr = sort(chnkr_tr);
 end
@@ -102,15 +110,16 @@ ws_r = ws*xip;
 % src = []; src.r = [-1.6;-0.]; 
 src = []; src.r = [d_r;-0.]; 
 src = []; src.r = [0.5;0.5];
-src = []; src.r = [-0.5;0];
+src = []; src.r = [0.3;1.5];
+% src = []; src.r = [21*d_r;0];
 
 
 nplot = 240;
 % nplot = 60;nplot = 120;
-xx = linspace(-4*d_l, 4*d_l,nplot);
+xx = 1.5*linspace(-4*d_l, 4*d_l,nplot);
 % xx = linspace(-3*d_l, 3*d_l,nplot);
 % yy = linspace(-3*d_l, 3*d_l,3*nplot/4);
-yy = linspace(-2*d_l, 2*d_l,2*nplot/4);
+yy = 1.5*linspace(-2*d_l, 2*d_l,2*nplot/4);
 % yy = linspace(-3*d_l, 3*d_l,nplot);
 [X,Y] = meshgrid(xx,yy);
 targ = []; targ.r = [X(:).'; Y(:).'];
@@ -129,14 +138,14 @@ iout = chunkgraphinregion(cgrph_r,targmod)==1;
 ir = iout & (X(:)>0);
 targr = []; targr.r = targ.r(:,ir);
 %%
-t1 = tic;
-[sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l] = free_mat(chnkr_l,zk,nu_l,kappa_l,d_l);
-[sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r] = free_mat(chnkr_r,zk,nu_r,kappa_r,d_r);
-
-%%
-[rhsmat_l,rhsmat0_l,layermat_l,layermat0_l] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_l,1,zk,nu_l,kappa_l,d_l,sn_l,l_l,s0_l_l,sn_l_l);
-[rhsmat_r,rhsmat0_r,layermat_r,layermat0_r] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_r,1,zk,nu_r,kappa_r,d_r,sn_r,l_r,s0_l_r,sn_l_r);
-tpre = toc(t1)
+% t1 = tic;
+% [sys_l,sn_l,l_l,H_l,s0_l_l,sn_l_l] = free_mat(chnkr_l,zk,nu_l,kappa_l,d_l);
+% [sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r] = free_mat(chnkr_r,zk,nu_r,kappa_r,d_r);
+% 
+% %%
+% [rhsmat_l,rhsmat0_l,layermat_l,layermat0_l] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_l,1,zk,nu_l,kappa_l,d_l,sn_l,l_l,s0_l_l,sn_l_l);
+% [rhsmat_r,rhsmat0_r,layermat_r,layermat0_r] = precom_free_layer(chnkr_tr,chnkr_tr,chnkr_r,1,zk,nu_r,kappa_r,d_r,sn_r,l_r,s0_l_r,sn_l_r);
+% tpre = toc(t1)
 
 %%
 t1 = tic;
@@ -184,8 +193,9 @@ uin(ir) = uinr;
 us = -uscat+uin;
 
 % us = uscat;
-figure(2);clf
-h = pcolor(X,Y, reshape((abs(us)),size(X))); h.EdgeColor = 'None';
+f2=figure(2);clf
+f2.Position = [1 1 643 441];
+h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
 plot(chnkrs_L(1,:),chnkrs_L(2,:),'k.','markersize',15)
@@ -195,10 +205,12 @@ hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
+clim(1.4*[-1e-3,1e-3])
 set(gca,'FontSize',18)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
 
+exportgraphics(gcf,'free_glue_sol.pdf','ContentType','vector','Resolution',300);
 
 skern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 's');
 u0 = skern_0(src,targ);
@@ -221,7 +233,7 @@ u0 = skern_0(src,targ);
 
 %%
 if ifacc
-    src = []; src.r = [-d_r;-0.]; 
+    src = []; src.r = [-d_r;-3]; 
     t1 = tic;
     data = free_scatter_fast(src,chnkr_tr,chnkr_r,1,1,zk,nu_r,kappa_r,d_r,ws_r,sys_r,sn_r,l_r,H_r,s0_l_r,sn_l_r,layermat_r,layermat0_r);
     trhs = toc(t1)
@@ -298,7 +310,9 @@ if ifacc
     
     us(il) = ul;
     us(ir) = ur-uinr;
-    figure(11);clf
+    us = us./max(abs(uinr));
+    f2=figure(11);clf
+    f2.Position = [1 1 643 441];
     h = pcolor(X,Y, reshape(log10(abs(us)),size(X))); h.EdgeColor = 'None';
     hold on
     scatter(src.r(1,1),src.r(2,1),400,'r.')
@@ -313,6 +327,8 @@ if ifacc
     set(gca,'FontSize',18)
     set(gca,'TickLabelInterpreter','latex');
     set(c,'TickLabelInterpreter','latex');
+    clim([-inf,-7])
+    exportgraphics(gcf,'free_glue_error.pdf','ContentType','vector','Resolution',300);
     % 
 
 end

@@ -3,7 +3,7 @@ d = 1.2;
 
 kappa = 0.3+0.3*1i;
 
-nplot = 80;
+nplot = 40;
 xx = linspace(-1.5*d, 1.5*d,nplot);
 yy = xx;
 [X,Y] = meshgrid(xx,yy);
@@ -43,22 +43,29 @@ ht = 1.02*d; hb = -1.02*d;
 [pxys_l, cs_l] = build_pxys(zk,kappa,d,ht,hb,skern,s2trkern,l,40);
 
 %%
-ising = 1;
+ising = 0;
 fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,pxys_l,cs_l,l,ising);
+fkern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate');
 
 curv = signed_curvature(chnkr);
 curv = curv(:);
 
 opts = [];
-opts.sing = 'log';
+opts.sing = 'smooth';
+opts.quad = 'native';
+
+opts_0 = [];
+opts_0.sing = 'log';
 
 start = tic;
 sys = chunkermat(chnkr,fkern, opts);
-sys = sys - 0.5*eye(2*chnkr.npt);
+sys_0 = chunkermat(chnkr,fkern_0, opts_0);
+sys = sys + sys_0 - 0.5*eye(2*chnkr.npt);
 sys(2:2:end,1:2:end) = sys(2:2:end,1:2:end) + curv.*eye(chnkr.npt);
 toc(start)
 %%
 
+ising = 1;
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,pxys_l,cs_l,l,ising);
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,pxys_l,cs_l,l,ising);
 

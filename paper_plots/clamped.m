@@ -1,10 +1,10 @@
 %%
-addpath(genpath('../../flexural-staircases'))
-zk = 2;
-
-zk = 1.2;
-
-nnode = 61;
+% addpath(genpath('../../flexural-staircases'))
+% zk = 2;
+% zk = 1.2;
+zk = 3.6;
+zk = 7;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -21,7 +21,7 @@ nkappa = length(kappa);
 %%
 
 nplot = 240;
-nplot = 60;
+% nplot = 60;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -40,7 +40,7 @@ src = []; src.r = [[0;-2],[d/2;1.5]];
 
 chnkrs = [];
 for i = (-6:6)
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 % iout = ~chunkerinterior(chnkrs,targ);
@@ -56,8 +56,12 @@ l=2; N = 40; a = 15; M = 1e4;
 sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 
 %%
-ising = 1;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising);
+ising = 0;
+nsub = 1;
+alpha = reshape(exp(1i*kappa(:)*d),[nkappa,1,1]); 
+
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate',kappa,d,sn,[],[],l,ising,nsub);
+fkern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'clamped_plate');           % build the desired kernel
 
 curv = signed_curvature(chnkr);
 curv = curv(:);
@@ -65,15 +69,32 @@ curv = curv(:);
 opts = [];
 opts.sing = 'log';
 
+opts2 = [];
+opts2.quad = 'native';
+opts2.sing = 'smooth';
+
 start = tic;
-sys = chunkermat(chnkr,fkern, opts);
+sys = chunkermat(chnkr,fkern, opts2);
 sys = reshape(sys,nkappa,2*chnkr.npt,2*chnkr.npt);
 
-sys = sys - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
+sys_0 = chunkermat(chnkr,fkern_0, opts);
+sys_0 = reshape(sys_0,[1 size(sys_0)]);
+
+for ii = -nsub:nsub
+    if ii ~= 0 
+        sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0,chnkr);
+  
+        sub = reshape(sub,[1,2*chnkr.npt,2*chnkr.npt]);
+
+        sys_0 = sys_0 + alpha.^(ii).*sub;
+    end
+end
+
+sys = sys + sys_0 - reshape(0.5*eye(2*chnkr.npt),1,2*chnkr.npt,2*chnkr.npt);
 sys(:,2:2:end,1:2:end) = sys(:,2:2:end,1:2:end) + reshape(curv.*eye(chnkr.npt),1,chnkr.npt,chnkr.npt);
 toc(start)
 %%
-
+ising = 1;
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,[],[],l,ising);
 bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'clamped_plate_bcs',kappa,d,sn,[],[],l,ising);
 
@@ -85,6 +106,7 @@ rhs = -bskern(src,chnkr);
 sol = 0*rhs;
 for i = 1:nkappa
 sol(i:nkappa:end,:) = (squeeze(sys(i,:,:))\rhs(i:nkappa:end,:))*ws(i);
+cond(squeeze(sys(i,:,:)))
 end
 
 %%
@@ -132,46 +154,61 @@ utot = uscat+uin;
 
 
 %%
+
 chnkrs = [];
 for i = -4:4
-    chnkrs = [chnkrs, chnkr + [i*d;0]];
+    chnkrs = [chnkrs, chnkrplot + [i*d;0]];
 end
 chnkrs = merge(chnkrs);
 
 us = (NaN+NaN*1i)*zeros(1,size(targ.r,2));
 us(iout) = utot(:,1);
 
-figure(1);clf
-h = pcolor(X,Y, reshape(log10(abs(us)/norm(uin(:,1),inf)),size(X))); h.EdgeColor = 'None';
+f1=figure(1);clf
+f1.Position = [1 1 643 441];
+C = reshape(log10(abs(us)/norm(uin(:,1),inf)), size(X)); 
+h = pcolor(X,Y,C);
+set(gca,'Color','w')
+h.EdgeColor = 'None'; 
+h.FaceColor = 'texturemap'; 
+h.AlphaData = ~isnan(C);
+h.FaceAlpha = 'texturemap';
 hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
-plot(chnkrs,'k.','markersize',15)
+plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-set(gca,'FontSize',18)
+vv = sort(abs(C(:)));
+clim([min(C(:)),-vv(3)])
+set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'clamp_acc.pdf','resolution',200)
+% exportgraphics(f1,'clamped_acc.pdf','ContentType','vector','Resolution',300);
 % %%
-figure(2);clf
+f2=figure(2);clf
+f2.Position = [1 1 643 441];
 us(iout) = utot(:,2);
-% h = pcolor(X,Y, reshape((real(us)),size(X))); h.EdgeColor = 'None';
-h = pcolor(X,Y, reshape((imag(us)),size(X))); h.EdgeColor = 'None';
+C = reshape((imag(us)),size(X));
+h = pcolor(X,Y,C);
+h.EdgeColor = 'None'; 
+h.FaceColor = 'texturemap'; 
+h.AlphaData = ~isnan(C);
+h.FaceAlpha = 'texturemap';
 hold on
-scatter(src.r(1,2),src.r(2,2),400,'r.')
-plot(chnkrs,'k.','markersize',15)
+scatter(src.r(1,2),src.r(2,2),300,'r.')
+plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-set(gca,'FontSize',18)
+set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-% exportgraphics(gcf,'clamp_sol.pdf','resolution',200)
+% exportgraphics(f2,'clamped_sol.pdf','ContentType','vector','Resolution',300);
 
 
 function [r,d,d2] = cos_func(t,d,A)

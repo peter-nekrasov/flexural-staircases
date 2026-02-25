@@ -1,4 +1,4 @@
-function [val,grad,hess] = green(src,targ,kappa,d,s0,sn,l,ising)
+function [val,grad,hess] = green(src,targ,kappa,d,s0,sn,l,ising,nsub)
 %CHNK.LAP2DQUAS.GREEN evaluate the quasiperiodic Helmholtz Green's function
 % for the given sources and targets
 %
@@ -66,6 +66,12 @@ if nargout > 2
 hess = zeros(nkappa,npt,3);
 end
 
+if nargin < 9
+    nsub = 0;
+elseif nsub > l
+    error('trying to subtract off too many copies')
+end
+
 zk = 0;
 tol = 1e-10;
 Lbd = sqrt((log(tol))^2/real(ythresh)^2 + real(zk)^2);
@@ -106,7 +112,7 @@ if ~isempty(rxclose)
         if ising == 1
             iuse = true(nptclose,1);
         else
-            iuse = nxclose ~= -i;
+            iuse = ~ismember(nxclose, -i-nsub:-i+nsub); 
         end
 
         rxi = rxclose - i*d;
@@ -145,6 +151,12 @@ if ~isempty(rxclose)
     
     tmp = reshape(Rns.*cs,[],N);
     val_far = sn(:,:)*tmp.' + s0;
+    
+    ndiag = sum(rclose < 1e-14);
+    if ndiag > 0
+    val_far(:,rclose < 1e-14) = repmat(s0,1,ndiag); % diagonal replacement
+    end
+
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
@@ -158,6 +170,12 @@ if ~isempty(rxclose)
         grad_far_t = ((-reshape((1:N),1,[]).*sn(:,:))*tmp.');
         
         grad_far = cat(3,cs(:,:,1).*grad_far_p - ss(:,:,1).*grad_far_t, ss(:,:,1).*grad_far_p + cs(:,:,1).*grad_far_t);
+        
+        if ndiag > 0
+            grad_far(:,rclose < 1e-14,1) = repmat(sn(:,1),1,ndiag);
+            grad_far(:,rclose < 1e-14,2) = 0;            
+        end
+        
         grad(:,iclose,:) = grad_near + grad_far; 
     end
     if nargout > 2
@@ -189,6 +207,12 @@ if ~isempty(rxclose)
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
 
+        if ndiag > 0
+            hess_far(:,rclose < 1e-14,1) = repmat(2*sn(:,2),1,ndiag);
+            hess_far(:,rclose < 1e-14,2) = 0; 
+            hess_far(:,rclose < 1e-14,3) = repmat(-2*sn(:,2),1,ndiag);            
+        end
+
         hess(:,iclose,:) = hess_near + hess_far;
     end
 end
@@ -200,12 +224,14 @@ if nargout == 1
     val = quasi_phase.*val;
 
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        vali = chnk.lap2d.green([0;0],[rx(isub).'+ nx(isub).'*d;ry(isub).']);
+        vali = chnk.lap2d.green([0;0],[rx(isub).'+ (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
-        val(:,isub,:) = val(:,isub,:) - vali;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        end
         end
     end
 
@@ -215,14 +241,16 @@ elseif nargout == 2
     grad = quasi_phase.*grad;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub        
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
     
         if any(isub)
-        [vali, gradi] = chnk.lap2d.green([0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi] = chnk.lap2d.green([0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        end
         end
     end
 
@@ -234,17 +262,19 @@ elseif nargout == 3
     hess = quasi_phase.*hess;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub        
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi] = chnk.lap2d.green([0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi] = chnk.lap2d.green([0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        end
         end
     end
 

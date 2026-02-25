@@ -1,4 +1,4 @@
-function submat = kern(srcinfo,targinfo,type,kappa,d,s0,sn,l,ising,varargin)
+function submat = kern(srcinfo,targinfo,type,kappa,d,s0,sn,l,ising,nsub,varargin)
 %CHNK.LAP2D.KERN standard Laplace layer potential kernels in 2D
 %
 % Syntax: submat = kern(srcinfo,targinfo,type,varargin)
@@ -10,12 +10,16 @@ targ = targinfo.r(:,:);
 [~,nt] = size(targ);
 nkappa = length(kappa);
 
+if nargin < 10
+    nsub = 0;
+end
+
 switch lower(type)
 % double layer
 case {'d', 'double'}
     %srcnorm = chnk.normal2d(srcinfo);
     srcnorm = srcinfo.n(:,:);
-    [~,grad] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising);
+    [~,grad] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising,nsub);
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
     submat = -(grad(:,:,1).*nx + grad(:,:,2).*ny);
@@ -47,7 +51,7 @@ case {'stau'}
 % Hilbert transform (two times the adjoint of stau)
 case {'hilb'} 
     srcnorm = srcinfo.n;
-    [~,grad] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising);
+    [~,grad] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising,nsub);
     % nx = repmat((srcnorm(1,:)),nt,1);
     % ny = repmat((srcnorm(2,:)),nt,1);
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
@@ -59,7 +63,7 @@ case {'hilb'}
 case {'hilbprime'} 
     srcnorm = srcinfo.n;
     targnorm = targinfo.n;
-    [~,~,hess] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising);
+    [~,~,hess] = chnk.lap2dquas.green(src,targ,kappa,d,s0,sn,l,ising,nsub);
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
     nxtarg = repmat(reshape(targnorm(1,:),1,nt,1),nkappa,1,ns);

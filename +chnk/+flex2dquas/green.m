@@ -1,4 +1,4 @@
-function [val,grad,hess,third,fourth,fifth,sixth] = green(src,targ,zk,kappa,d,sn,l,ising)
+function [val,grad,hess,third,fourth,fifth,sixth] = green(src,targ,zk,kappa,d,sn,l,ising,nsub)
 %CHNK.FLEX2DQUAS.GREEN evaluate the quasiperiodic flexural Green's function
 % for the given sources and targets
 %
@@ -59,6 +59,12 @@ nxclose = nx(iclose);
 nptclose = size(rxclose, 1);
 
 nkappa = length(kappa);
+
+if nargin < 9
+    nsub = 0;
+elseif nsub > l
+    error('trying to subtract off too many copies')
+end
 
 val = zeros(nkappa,npt,1);
 if nargout > 1
@@ -164,7 +170,7 @@ if ~isempty(rxclose)
         if ising == 1
             iuse = true(nptclose,1);
         else
-            iuse = nxclose ~= -i;
+            iuse = ~ismember(nxclose, -i-nsub:-i+nsub); 
         end
 
         rxi = rxclose - i*d;
@@ -262,6 +268,7 @@ if ~isempty(rxclose)
     eip = (rxclose+1i*ryclose)./rclose;
     eipn = reshape(eip.^ns,1,[], N+1);
     cs = (eipn+1./eipn)/2;
+    % cs(isnan(cs)) = 0;
     
     Js = reshape(Js,1,[],N+8);
     Is = reshape(Is,1,[],N+8);
@@ -271,24 +278,36 @@ if ~isempty(rxclose)
     tmpj = reshape(Js(:,:,2:end-7).*cs(:,:,2:end),[],N);
     tmpi = reshape(-Is(:,:,2:end-7).*cs(:,:,2:end),[],N);    
     val_far = 0.25*1i*(Js(:,:,1).*snj(:,:,1)-Is(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
+    
+    ndiag = sum(rclose < 1e-14);
+    if ndiag > 0
+    val_far(:,rclose < 1e-14) = repmat(0.25*1i*(snj(:,:,1)-sni(:,:,1)),1,ndiag); % diagonal replacement
+    end
     val(:,iclose) = val_near+val_far;
     
     if nargout >1
         DJs = cat(3,-Js(:,:,2),.5*(Js(:,:,1:end-8)-Js(:,:,3:end-6)))*zk;
         DIs = cat(3,-Is(:,:,2),.5*(Is(:,:,1:end-8)-Is(:,:,3:end-6)))*1i*zk;
         ss = (eipn-1./eipn)/2i;
+        % ss(isnan(ss)) = 0;
         
         tmpj = reshape(DJs(:,:,2:end).*cs(:,:,2:end),[],N);
         tmpi = reshape(-DIs(:,:,2:end).*cs(:,:,2:end),[],N);
 
         grad_far_p = 0.25*1i*(DJs(:,:,1).*snj(:,:,1)-DIs(:,:,1).*sni(:,:,1)) + 0.5*1i*snj(:,2:end)*tmpj.' + 0.5*1i*sni(:,2:end)*tmpi.';
-        
+
         tmpj = reshape((Js(:,:,2:end-7)).*ss(:,:,2:end),[],N)./rclose;
         tmpi = reshape((-Is(:,:,2:end-7)).*ss(:,:,2:end),[],N)./rclose;
 
         grad_far_t = (0.5*1i*((-reshape((1:N),1,[]).*sni(:,2:end))*tmpi.'))+(0.5*1i*((-reshape((1:N),1,[]).*snj(:,2:end))*tmpj.'));
         
         grad_far = cat(3,cs(:,:,2).*grad_far_p - ss(:,:,2).*grad_far_t, ss(:,:,2).*grad_far_p + cs(:,:,2).*grad_far_t);
+
+        if ndiag > 0
+        grad_far(:,rclose < 1e-14,1) = repmat(0.25*1i*(zk*snj(:,:,2)-1i*zk*sni(:,:,2)),1,ndiag);
+        grad_far(:,rclose < 1e-14,2) = 0;
+        end
+
         grad(:,iclose,:) = grad_near + grad_far; 
     end
     if nargout > 2
@@ -333,6 +352,12 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';
 
         hess_far = cat(3,hess_far_xx, hess_far_xy, hess_far_yy);
+
+        if ndiag > 0     
+        hess_far(:,rclose < 1e-14,1) = repmat(-0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))+.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3)),1,ndiag);
+        hess_far(:,rclose < 1e-14,2) = 0;
+        hess_far(:,rclose < 1e-14,3) = repmat(-0.25*1i*zk^2/2*(snj(:,:,1)+sni(:,:,1))-.5*1i*zk^2/4*(snj(:,:,3)+sni(:,:,3)),1,ndiag);
+        end
 
         hess(:,iclose,:) = hess_near + hess_far;
     end
@@ -400,6 +425,13 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';
 
         third_far = cat(3,third_far_xxx,third_far_xxy,third_far_xyy,third_far_yyy);
+
+        if ndiag > 0      
+        third_far(:,rclose < 1e-14,1) = repmat(-.5*1i*(6*(zk)^3.*snj(:,:,2)-6*(1i*zk)^3*sni(:,:,2))/16 + .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48,1,ndiag) ;
+        third_far(:,rclose < 1e-14,2) = 0;
+        third_far(:,rclose < 1e-14,3) = repmat(-.5*1i*(2*(zk)^3.*snj(:,:,2)-2*(1i*zk)^3*sni(:,:,2))/16 - .5*1i*(6*(zk)^3.*snj(:,:,4)-6*(1i*zk)^3*sni(:,:,4))/48,1,ndiag) ;
+        third_far(:,rclose < 1e-14,4) = 0;
+        end
 
         third(:,iclose,:) = third_near + third_far;
     end
@@ -487,6 +519,14 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';        
 
         fourth_far = cat(3,fourth_far_xxxx,fourth_far_xxxy,fourth_far_xxyy,fourth_far_xyyy,fourth_far_yyyy);
+
+        if ndiag > 0        
+        fourth_far(:,rclose < 1e-14,1) = repmat(0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) - 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,ndiag) ;
+        fourth_far(:,rclose < 1e-14,2) = 0;
+        fourth_far(:,rclose < 1e-14,3) = repmat(0.25*1i*(8*(zk)^4.*snj(:,:,1)-8*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0*0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) - 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,ndiag) ;
+        fourth_far(:,rclose < 1e-14,4) = 0;
+        fourth_far(:,rclose < 1e-14,5) = repmat(0.25*1i*(24*(zk)^4.*snj(:,:,1)-24*(1i*zk)^4.*sni(:,:,1))/(2^6) + 0.5*1i*(24*(zk)^4.*snj(:,:,3)-24*(1i*zk)^4.*sni(:,:,3))/(2^4*6) + 0.5*1i*(24*(zk)^4.*snj(:,:,5)-24*(1i*zk)^4.*sni(:,:,5))/(2^4*24),1,ndiag) ;
+        end
 
         fourth(:,iclose,:) = fourth_near + fourth_far;
     end
@@ -664,6 +704,15 @@ if ~isempty(rxclose)
             0.25*1i*tmp_ni(:,1).'.*sni(:,1)+.5*1i*sni(:,2:end)*tmp_ni(:,2:end).';   
 
         fifth_far = cat(3,fifth_far_xxxxx,fifth_far_xxxxy,fifth_far_xxxyy,fifth_far_xxyyy,fifth_far_xyyyy,fifth_far_yyyyy);
+
+        if ndiag > 0
+        fifth_far(:,rclose < 1e-14,1) = repmat(.5*1i*(120*(zk)^5.*snj(:,:,2)-120*(1i*zk)^5*sni(:,:,2))/(6*2^6) - .5*1i*(120*(zk)^5.*snj(:,:,4)-120*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,ndiag);
+        fifth_far(:,rclose < 1e-14,2) = 0;
+        fifth_far(:,rclose < 1e-14,3) = repmat(.5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(24*(zk)^5.*snj(:,:,4)-24*(1i*zk)^5*sni(:,:,4))/(24*2^5) - .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,ndiag);
+        fifth_far(:,rclose < 1e-14,4) = 0;
+        fifth_far(:,rclose < 1e-14,5) = repmat(.5*1i*(24*(zk)^5.*snj(:,:,2)-24*(1i*zk)^5*sni(:,:,2))/(6*2^6) + .5*1i*(72*(zk)^5.*snj(:,:,4)-72*(1i*zk)^5*sni(:,:,4))/(24*2^5) + .5*1i*(120*(zk)^5*snj(:,:,6)-120*(1i*zk)^5*sni(:,:,6))/(120*2^5),1,ndiag);
+        fifth_far(:,rclose < 1e-14,6) = 0;
+        end
 
         fifth(:,iclose,:) = fifth_near + fifth_far;
     end
@@ -897,13 +946,15 @@ quasi_phase = exp(1i*kappa(:)*nx(:).'*d);
 if nargout == 1
     val = quasi_phase.*val;
 
-    if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+    if ising == 0 
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        vali = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).'+ nx(isub).'*d;ry(isub).']);
+        vali = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).'+ (nx(isub).' - ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
-        val(:,isub,:) = val(:,isub,:) - vali;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        end
         end
     end
 
@@ -913,14 +964,16 @@ elseif nargout == 2
     grad = quasi_phase.*grad;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
     
         if any(isub)
-        [vali, gradi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        end
         end
     end
 
@@ -932,17 +985,19 @@ elseif nargout == 3
     hess = quasi_phase.*hess;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        end
         end
     end
 
@@ -956,19 +1011,21 @@ elseif nargout == 4
     third = quasi_phase.*third;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi,thirdi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi,thirdi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
         thirdi = reshape(thirdi,1,[],4);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
-        third(:,isub,:) = third(:,isub,:) - thirdi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        third(:,isub,:) = third(:,isub,:) - thirdi.*alpha.^(ii);
+        end
         end
     end
 
@@ -984,21 +1041,23 @@ elseif nargout == 5
     fourth = quasi_phase.*fourth;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi,thirdi,fourthi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi,thirdi,fourthi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
         thirdi = reshape(thirdi,1,[],4);
         fourthi = reshape(fourthi,1,[],5);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
-        third(:,isub,:) = third(:,isub,:) - thirdi;
-        fourth(:,isub,:) = fourth(:,isub,:) - fourthi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        third(:,isub,:) = third(:,isub,:) - thirdi.*alpha.^(ii);
+        fourth(:,isub,:) = fourth(:,isub,:) - fourthi.*alpha.^(ii);
+        end
         end
     end
 
@@ -1016,10 +1075,11 @@ elseif nargout == 6
     fifth = quasi_phase.*fifth;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi,thirdi,fourthi,fifthi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi,thirdi,fourthi,fifthi] = chnk.flex2d.hkdiffgreen(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
@@ -1027,12 +1087,13 @@ elseif nargout == 6
         fourthi = reshape(fourthi,1,[],5);
         fifthi = reshape(fifthi,1,[],6);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
-        third(:,isub,:) = third(:,isub,:) - thirdi;
-        fourth(:,isub,:) = fourth(:,isub,:) - fourthi;
-        fifth(:,isub,:) = fifth(:,isub,:) - fifthi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        third(:,isub,:) = third(:,isub,:) - thirdi.*alpha.^(ii);
+        fourth(:,isub,:) = fourth(:,isub,:) - fourthi.*alpha.^(ii);
+        fifth(:,isub,:) = fifth(:,isub,:) - fifthi.*alpha.^(ii);
+        end
         end
     end
 
@@ -1052,10 +1113,11 @@ elseif nargout == 7
     sixth = quasi_phase.*sixth;
     
     if ising == 0
-        isub = (abs(nx(:)) > max(ls)) | ifar;
+        for ii = -nsub:nsub
+        isub = (abs(nx(:)-ii) > max(ls)) | ifar;
 
         if any(isub)
-        [vali, gradi, hessi,thirdi,fourthi,fifthi,sixthi] = hkdiffgreen1(zk,[0;0],[rx(isub).' + nx(isub).'*d;ry(isub).']);
+        [vali, gradi, hessi,thirdi,fourthi,fifthi,sixthi] = hkdiffgreen1(zk,[0;0],[rx(isub).' + (nx(isub).'-ii)*d;ry(isub).']);
         vali = reshape(vali,1,[],1);
         gradi = reshape(gradi,1,[],2);
         hessi = reshape(hessi,1,[],3);
@@ -1064,13 +1126,14 @@ elseif nargout == 7
         fifthi = reshape(fifthi,1,[],6);
         sixthi = reshape(sixthi,1,[],7);
 
-        val(:,isub,:) = val(:,isub,:) - vali;
-        grad(:,isub,:) = grad(:,isub,:) - gradi;
-        hess(:,isub,:) = hess(:,isub,:) - hessi;
-        third(:,isub,:) = third(:,isub,:) - thirdi;
-        fourth(:,isub,:) = fourth(:,isub,:) - fourthi;
-        fifth(:,isub,:) = fifth(:,isub,:) - fifthi;
-        sixth(:,isub,:) = sixth(:,isub,:) - sixthi;
+        val(:,isub,:) = val(:,isub,:) - vali.*alpha.^(ii);
+        grad(:,isub,:) = grad(:,isub,:) - gradi.*alpha.^(ii);
+        hess(:,isub,:) = hess(:,isub,:) - hessi.*alpha.^(ii);
+        third(:,isub,:) = third(:,isub,:) - thirdi.*alpha.^(ii);
+        fourth(:,isub,:) = fourth(:,isub,:) - fourthi.*alpha.^(ii);
+        fifth(:,isub,:) = fifth(:,isub,:) - fifthi.*alpha.^(ii);
+        sixth(:,isub,:) = sixth(:,isub,:) - sixthi.*alpha.^(ii);
+        end
         end
     end
 

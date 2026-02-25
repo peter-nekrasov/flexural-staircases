@@ -117,8 +117,14 @@ case {'clamped_plate'}
     nytarg = repmat(reshape(targnorm(2,:),1,nt,1),nkappa,1,ns);
     nytarg = reshape(nytarg,[],ns);
 
+    if length(varargin) > 0
+        nsub = varargin{1};
+    else 
+        nsub = 0;
+    end
+
    
-   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0,nsub);  
    
    dx = repmat(srctang(1,:),nkappa*nt,1);
    dy = repmat(srctang(2,:),nkappa*nt,1);
@@ -459,7 +465,13 @@ case {'free_plate'}
    targd2 = targinfo.d2;
    nu = varargin{1};
 
-   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+   if length(varargin) > 1
+        nsub = varargin{2};
+   else
+        nsub = 0;
+   end
+
+   [~, ~, hess, third, fourth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0,nsub);  
 
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
@@ -503,8 +515,8 @@ case {'free_plate'}
 
    kappatarg = numer ./ denom; % target curvature
 
-   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,s0_l,sn_l,l,0);
-   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,s0_l,sn_l,l,0);
+   hilb = chnk.lap2dquas.kern(srcinfo,targinfo,'hilb',kappa,d,s0_l,sn_l,l,0,nsub);
+   hilbp = chnk.lap2dquas.kern(srcinfo,targinfo,'hilbprime',kappa,d,s0_l,sn_l,l,0,nsub);
    hilb = (1+nu) * hilb / 2;
    hilbp = (1+nu) * hilbp / 2;
    
@@ -687,7 +699,7 @@ case {'supported_plate_bcs'}
     tauytarg = (dy./ds);
 
     nu = varargin{1};
-    
+
     [val, ~, hess] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
     
     firstbc = 1/(2*zk^2).*val ;
@@ -768,7 +780,13 @@ case {'supported_plate'}
     targtang = targinfo.d;
     coefs = varargin{1};
     nu = coefs(1);
-    
+
+    if length(varargin) > 1
+        nsub = varargin{2};
+    else 
+        nsub = 0;
+    end
+
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);
     
@@ -813,7 +831,7 @@ case {'supported_plate'}
     a2 = (-1+nu)*(7+nu)/(3 - nu);
     a3 = (1-nu)*(3+nu)/(1+nu);
     
-    [~, grad, hess, third, fourth,fifth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0);  
+    [~, grad, hess, third, fourth,fifth] = chnk.flex2dquas.green(src,targ,zk,kappa,d,Sn,l,0,nsub);  
     
     K11 = -1/(2*zk^2)*(third(:,:,1).*nx.^3 + 3*third(:,:,2).*nx.^2.*ny + 3*third(:,:,3).*nx.*ny.^2 + third(:,:,4).*ny.^3) + ...
          -a1/(2*zk^2)*(third(:,:,1).*nx.*taux.^2 + third(:,:,2).*(ny.*taux.^2 + 2*nx.*taux.*tauy) + third(:,:,3).*(nx.*tauy.^2 + 2*ny.*taux.*tauy) + third(:,:,4).*ny.*tauy.^2) + ...
@@ -885,6 +903,7 @@ case {'supported_plate_eval'}
     srcd2 = srcinfo.d2;
     coefs = varargin{1};
     nu = coefs(1);
+    % nsub = varargin{2};
     
     nx = repmat(srcnorm(1,:),nkappa*nt,1);
     ny = repmat(srcnorm(2,:),nkappa*nt,1);

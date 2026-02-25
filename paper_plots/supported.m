@@ -1,16 +1,46 @@
-%%
-% addpath(genpath('../../flexural-staircases'))
-% zk = 0.8;
-% zk = 1.2;
-% zk = 7;
-% d = 1.2;
-
-zk = 7;
 d = 2;
+zk = 7;
+
+cparams = []; cparams.ta = -d/2; cparams.tb = d/2;
+cparams.eps = 1e-10;
+cparams.maxchunklen = 2/zk;cparams.ifclosed = 1;
+nch = 20; A = -0.5;
+% chnkr = chunkerfuncuni(@(t) cos_func(t,d,A),nch,cparams);
+chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+chnkr1 = reverse(chnkr0);
+
+cparams = rmfield(cparams,'ta');
+cparams = rmfield(cparams,'tb');
+chnkr2 = chunkerfunc(@(t) starfish(t,3),cparams); 
+chnkr2 = move(chnkr2,[], [0;2.5],0.3,0.5);
+src = []; src.r = [0;0]; src.n = [1;0];
+
+
+
+rend = chunkends(chnkr,[1,chnkr1.nch]);
+rend = rend(:,[2,3]);
+
+verts = [rend, rend - [0;10]];
+edge2verts = [[1;2], [4;3], [3;1], [2;4],[NaN;NaN]];
+fchnk = cell(1,5);
+fchnk{1} = chnkr0;
+fchnk{5} = chnkr2;
+cgrph = chunkgraph(verts,edge2verts,fchnk);
+
+cparams.ifclosed = 0;
+ cparams.ta = -d/2; cparams.tb = d/2;
+chnkr0 = chunkerfunc(@(t) cos_func(t,d,A),cparams);
+
+chnkr = merge([chnkr1, chnkr2]);
+chnkrplot = merge([chnkr0, chnkr2]);
+figure(1);clf
+plot(chnkrplot,'linewidth',2)
+axis equal
+chnkr.npt
+
 nu = 0.3; 
 
-
-nnode = 62; %nnode = 42;
+nnode = 62;
 ts = linspace(-pi/d,pi/d,nnode);
 ts = ts(2:end);
 ws = 1/(nnode-1);
@@ -20,15 +50,22 @@ kappa = ts + amp*1i*sin(ts*d);
 xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
-% kappa = kappa(1); ws = ws(1); ws = 1;
+% kappa = pi/d + 1e-1; ws = 1;
+% kappa = kappa(10); ws = ws(1); ws = 1;
 nkappa = length(kappa);
 
+chnkr = makedatarows(chnkr,2);
+curv = signed_curvature(chnkr);
+kp = arclengthder(chnkr,curv);
+kpp = arclengthder(chnkr,kp);
+
+chnkr.data(1,:,:) = kp;
+chnkr.data(2,:,:) = kpp;
 
 %%
 
 nplot = 240;
 % nplot = 60;
-% nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
 yy = linspace(0, 6*d,3*nplot/3) - 1.2;
@@ -60,8 +97,6 @@ nshift = round((targ.r(1,:)-targmod.r(1,:))/d);
 
 src = []; src.r = [[0;-2],[d/2;1.5]];
 % src = []; src.r = [[0;-2],[d/2;1]];
-src = []; src.r = [[0;-2],[d/2;7]];
-src = []; src.r = [[0;-2],[d/2;1.5]];
 % src.r = [0;-2];
 
 chnkrs = [];
@@ -89,101 +124,64 @@ sn = chnk.flex2dquas.latticecoefs((0:N).',zk,d,kappa,(exp(1i*kappa*d)),a,M,l+1);
 %
 
 alpha = reshape(exp(1i*kappa(:)*d),[nkappa,1,1]); 
-ising = 0;
-
-
 nsub = 1;
-fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate',kappa,d,sn,s0_l,sn_l,l,ising,nu,nsub);
-double = @(s,t) chnk.lap2dquas.kern(s,t,'d',kappa,d,s0_l,sn_l,l,ising,nsub);
-hilbert = @(s,t) chnk.lap2dquas.kern(s,t,'hilb',kappa,d,s0_l,sn_l,l,ising,nsub);
-opts = [];
-opts.sing = 'smooth';
-opts.quad = 'native';
+
+ising = 0;
+fkern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate',kappa,d,sn,[],[],l,ising,nu,nsub);
 
 opts2 = [];
+opts2.quad = 'native';
 opts2.sing = 'smooth';
-opts.quad = 'native';
-
 
 % building system matrix
 
 start = tic;
-sysmat1 = chunkermat(chnkr,fkern, opts);
-D = chunkermat(chnkr, double, opts2);
-H = chunkermat(chnkr, hilbert, opts2);     
+M3 = chunkermat(chnkr,fkern, opts2);   
+M3 = reshape(M3,nkappa,2*chnkr.npt,2*chnkr.npt);
 
-sysmat1 = reshape(sysmat1,nkappa,4*chnkr.npt,2*chnkr.npt);
-D = reshape(D,nkappa,chnkr.npt,chnkr.npt);
-H = reshape(H,nkappa,chnkr.npt,chnkr.npt);
-
-
-fkern =  @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate',nu);
-double = @(s,t) chnk.lap2d.kern(s,t,'d');
-hilbert = @(s,t) chnk.lap2d.kern(s,t,'hilb');
+fkern_0l =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_log',nu);           % build the desired kernel
+fkern_0s =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_smooth',nu);           % build the desired kernel
 
 opts = [];
 opts.sing = 'log';
 
-opts2 = [];
-opts2.sing = 'pv';
+c0 = (nu - 1)*(nu + 3)*(2*nu - 1)/(2*(3 - nu));
 
-% building system matrix
+M = chunkermat(chnkr,fkern_0l, opts);
+M2 = chunkermat(chnkr,fkern_0s, opts2);
 
-sysmat1_0 = chunkermat(chnkr,fkern, opts);
-D_0 = chunkermat(chnkr, double, opts);
-H_0 = chunkermat(chnkr, hilbert, opts2); 
+M = M - 0.5*eye(2*chnkr.npt);
+M(2:2:end,1:2:end) = M(2:2:end,1:2:end) + c0.*curv(:).^2.*eye(chnkr.npt) - 0*eye(chnkr.npt); % extra term shows up for the general problem
 
-sysmat1_0 = reshape(sysmat1_0,1,4*chnkr.npt,2*chnkr.npt);
-D_0 = reshape(D_0,1,chnkr.npt,chnkr.npt);
-H_0 = reshape(H_0,1,chnkr.npt,chnkr.npt);
+M = reshape(M,1,2*chnkr.npt,2*chnkr.npt);
+M2 = reshape(M2,1,chnkr.npt,chnkr.npt);
 
 for ii = -nsub:nsub
     if ii ~= 0 
-        Hsub = chunkerkernevalmat(chnkr + ii*[d;0],hilbert,chnkr);
-        Dsub = chunkerkernevalmat(chnkr + ii*[d;0],double,chnkr);
-        sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern,chnkr);
+        Msub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0l,chnkr);
+        M2sub = chunkerkernevalmat(chnkr + ii*[d;0],fkern_0s,chnkr,struct('forcesmooth',true));
   
-        Hsub = reshape(Hsub,[1,chnkr.npt,chnkr.npt]);
-        Dsub = reshape(Dsub,[1,chnkr.npt,chnkr.npt]);
-        sub = reshape(sub,[1,4*chnkr.npt,2*chnkr.npt]);
+        Msub = reshape(Msub,[1,2*chnkr.npt,2*chnkr.npt]);
+        M2sub = reshape(M2sub,[1,chnkr.npt,chnkr.npt]);
 
-        H_0 = H_0 + alpha.^(ii).*Hsub;
-        D_0 = D_0 + alpha.^(ii).*Dsub;
-        sysmat1_0 = sysmat1_0 + alpha.^(ii).*sub;
-
+        M = M + alpha.^(ii).*Msub;
+        M2 = M2 + alpha.^(ii).*M2sub;
     end
 end
 
-sysmat1 = sysmat1 + sysmat1_0; D = D + D_0; H = H + H_0;
+M(:,2:2:end,1:2:end) = M(:,2:2:end,1:2:end) + M2 ; % extra term shows up for the general problem
 
-D = permute(D,[2,3,1]);
-H = permute(H,[2,3,1]);
-s11b = permute(sysmat1(:,3:4:end,1:2:end),[2,3,1]);
-s21b = permute(sysmat1(:,4:4:end,1:2:end),[2,3,1]);
+sys = M3 + M;
 
-k11tmp = permute(pagemtimes(s11b,H) -  2*((1+nu)/2)^2*pagemtimes(D,D),[3,1,2]);
-k21tmp = permute(pagemtimes(s21b,H),[3,1,2]);
-
-sysmat = zeros(nkappa,2*chnkr.npt,2*chnkr.npt);
-sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + k11tmp;
-sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + k21tmp;
-% sysmat(:,1:2:end,1:2:end) = sysmat1(:,1:4:end,1:2:end) + sysmat1(:,3:4:end,1:2:end)*H  - 2*((1+nu)/2)^2*D*D;
-% sysmat(:,2:2:end,1:2:end) = sysmat1(:,2:4:end,1:2:end) + sysmat1(:,4:4:end,1:2:end)*H;
-sysmat(:,1:2:end,2:2:end) = sysmat1(:,1:4:end,2:2:end) + sysmat1(:,3:4:end,2:2:end);
-sysmat(:,2:2:end,2:2:end) = sysmat1(:,2:4:end,2:2:end) + sysmat1(:,4:4:end,2:2:end);
-
-D = [-1/2 + (1/8)*(1+nu).^2, 0; 0, 1/2];  % jump matrix 
-D = reshape(kron(eye(chnkr.npt), D),1,2*chnkr.npt,2*chnkr.npt);
-
-sys =  D + sysmat;
 t1 = toc(start);
 fprintf('%5.2e s : time to assemble matrix\n',t1)
 
 %%
 ising = 1;
 skern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 's',kappa,d,sn,s0_l,sn_l,l,ising);
-bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_bcs',kappa,d,sn,s0_l,sn_l,l,ising,nu);
+bskern =  @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_bcs',kappa,d,sn,s0_l,sn_l,l,ising,nu);
 skern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 's');
+bskern_0 =  @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_bcs',nu);
 
 rhs = -bskern(src,chnkr);
 
@@ -192,16 +190,6 @@ sol = 0*rhs;
 for i = 1:nkappa
 sol(i:nkappa:end,:) = (squeeze(sys(i,:,:))\rhs(i:nkappa:end,:))*ws(i);
 end
-sol = reshape(sol,nkappa,[],size(sol,2));
-
-dens_comb = zeros(nkappa,3*chnkr.npt,size(rhs,2));
-dens_comb(:,1:3:end,:) = sol(:,1:2:end,:);
-tmpsol = permute(sol,[2,3,1]);
-dh = pagemtimes(H,tmpsol(1:2:end,:,:));
-dh = permute(dh,[3,1,2]);
-dens_comb(:,2:3:end,:) = dh;
-dens_comb(:,3:3:end,:) = sol(:,2:2:end,:);
-dens_comb = reshape(dens_comb,[],size(rhs,2));
 
 %%
 
@@ -212,10 +200,10 @@ end
 
 uscat = 0*uin;
 
-ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'free_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
-ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'free_plate_eval',nu);
+ikern = @(s,t) chnk.flex2dquas.kern(zk, s, t, 'supported_plate_eval',kappa,d,sn,s0_l,sn_l,l,0,nu);
+ikern_0 = @(s,t) chnk.flex2d.kern(zk, s, t, 'supported_plate_eval',nu);
 
-wts = repmat(chnkr.wts(:).',3,1);
+wts = repmat(chnkr.wts(:).',2,1);
 nt = size(targout.r,2);
 
 start1 = tic;
@@ -237,7 +225,7 @@ for i = 1:ceil(ntout/nbatch)
     % gevalmat = exp(1i*kappa(:).*nshift(iout)*d) .* gevalmat;
     
     gevalmat = reshape(permute(gevalmat, [2,1,3]), nti,[]);
-    uscat(iuse,:) = gevalmat*dens_comb;
+    uscat(iuse,:) = gevalmat*sol;
 end
 t2 = toc(start1);
 fprintf('%5.2e s : time for kernel eval (for plotting)\n',t2)
@@ -254,7 +242,6 @@ f1=figure(1);clf
 f1.Position = [1 1 643 441];
 C = reshape(log10(abs(us)/norm(uin(:,1),inf)), size(X)); 
 h = pcolor(X,Y,C);
-set(gca,'Color','w')
 h.EdgeColor = 'None'; 
 h.FaceColor = 'texturemap'; 
 h.AlphaData = ~isnan(C);
@@ -263,22 +250,22 @@ hold on
 scatter(src.r(1,1),src.r(2,1),400,'r.')
 plot(chnkrs,'k-','LineWidth',2.5)
 c = colorbar;
-c.Ticks = floor(c.Limits(1)) : ceil(c.Limits(2));
+% clim([1e-6 1e-5])
+% c.Ticks = floor(c.Limits(1)) : ceil(c.Limits(2));
 hold off
 axis equal
 xlim([min(X(:)),max(X(:))])
 ylim([min(Y(:)),max(Y(:))])
-% vv = sort(abs(C(:)));
-% clim([min(C(:)),-7])
+vv = sort(abs(C(:)));
+clim([min(C(:)),-vv(3)])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f1,'free_acc.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f1,'supported_acc.pdf','ContentType','vector','Resolution',300);
 % %%
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
 us(iout) = utot(:,2);
-
 C = reshape((imag(us)),size(X));
 h = pcolor(X,Y,C);
 h.EdgeColor = 'None'; 
@@ -296,8 +283,10 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f2,'free_sol.pdf','ContentType','vector','Resolution',300);
+exportgraphics(f2,'supported_sol.pdf','ContentType','vector','Resolution',300);
 
+load('gong.mat')
+sound(y)
 
 function [r,d,d2] = cos_func(t,d,A)
 % parameterization of sinusoidal boundary with period d and amplitude A
