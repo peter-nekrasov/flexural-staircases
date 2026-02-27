@@ -8,7 +8,8 @@
 zk = 7;
 d = 2;
 nu = 0.3; 
-
+zk = 0.413087;
+zk = 0.393345440438917;
 
 nnode = 62; %nnode = 42;
 ts = linspace(-pi/d,pi/d,nnode);
@@ -21,13 +22,15 @@ xip = 1 + amp*1i*d*cos(ts*d);
 ws = ws*xip;
 
 % kappa = kappa(1); ws = ws(1); ws = 1;
+kappa = 0.480358503435243; ws = 1;
+kappa = 0.448286802748195; ws = 1;
 nkappa = length(kappa);
 
 
 %%
 
 nplot = 240;
-% nplot = 60;
+nplot = 60;
 % nplot = 120;
 xx = linspace(-4*d, 4*d,nplot);
 yy = xx;
@@ -273,7 +276,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f1,'free_acc.pdf','ContentType','vector','Resolution',300);
+% exportgraphics(f1,'free_acc.pdf','ContentType','vector','Resolution',300);
 % %%
 f2=figure(2);clf
 f2.Position = [1 1 643 441];
@@ -296,7 +299,7 @@ ylim([min(Y(:)),max(Y(:))])
 set(gca,'FontSize',16)
 set(gca,'TickLabelInterpreter','latex');
 set(c,'TickLabelInterpreter','latex');
-exportgraphics(f2,'free_sol.pdf','ContentType','vector','Resolution',300);
+% exportgraphics(f2,'free_sol.pdf','ContentType','vector','Resolution',300);
 
 
 function [r,d,d2] = cos_func(t,d,A)

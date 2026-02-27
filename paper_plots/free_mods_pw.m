@@ -8,6 +8,8 @@ kappas = linspace(1,pi/d,10);
 kappas = linspace(0.3+1e-2,pi/d,40);
 kappas = linspace(0.3+1e-2,pi/d,80);
 kappas = kappas(6:end);
+kappas = 0.480358503435243;
+% kappas = 
 % kappas = 1;
 % poles = 0*kappas;
 npoles = length(kappas);
@@ -29,6 +31,7 @@ nkappa = 1;
 
 
 kmin = 0.3; kmax = kappa-1e-4;
+kmin = 0.4; kmax = 0.41;
 poles{i} = free_mode(chnkr,nu,kappa,kmin,kmax,d,tol);
 
 figure(1);clf
@@ -168,7 +171,7 @@ pan_ref_new = [kmin;kmax];
 pans = [];
 modes = [];
 
-nref = 12;
+nref = 3;
 % tic;
 for j = 1:nref
     pan_ref = pan_ref_new;
