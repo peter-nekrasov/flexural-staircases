@@ -1,5 +1,5 @@
 % load('free_disp.mat')
-load('free_disp2.mat')
+% load('free_disp2.mat')
 % load('square_poles1.mat')
 nplot = 200;
 % nplot = 60;
